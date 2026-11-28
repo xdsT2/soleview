@@ -1517,6 +1517,16 @@ void ControlBar::setLocked(bool locked)
     update();
 }
 
+void ControlBar::setSavePending(bool pending)
+{
+    if (m_savePending == pending) {
+        return;
+    }
+    m_savePending = pending;
+    recomputeWidth();   // 宽档按钮入 / 出改变岛宽；中窄档只改「更多」菜单内容
+    update();
+}
+
 void ControlBar::setStyle(Style style)
 {
     if (m_style == style) {
@@ -1760,6 +1770,11 @@ QVector<ControlBar::Item> ControlBar::itemsFor(Tier t, int trackWidth) const
     if (wide) {
         place(Action::Rotate, kIslandBtn);
         x += kIslandInnerGap;
+        // #6 独立「无损保存」钮：有待保存变更时紧跟旋转钮右侧；不进工具栏排序体系。
+        if (m_savePending) {
+            place(Action::SaveLossless, kIslandBtn);
+            x += kIslandInnerGap;
+        }
         place(Action::Fullscreen, kIslandBtn);
         x += kIslandGroupGap;
     }
@@ -1810,6 +1825,9 @@ QVector<int> ControlBar::hiddenActionIds() const
     if (!wide) {
         out << 6 << 7 << 9;   // 旋转 / 全屏 / 进度滑杆
     }
+    if (m_savePending && !wide) {
+        out << 13;            // #6 无损保存（中 / 窄档收进「更多」）
+    }
     if (m_tier == Tier::Narrow) {
         out << 10 << 12;      // 页码 / 锁定
     }
@@ -1858,7 +1876,15 @@ QString ControlBar::layoutDump() const{
         hidden << QString::number(id);
     }
     const QRect more = moreButtonRect();
-    return QStringLiteral("tier=%1 avail=%2 width=%3 track=%4 hidden=[%5] more=%6,%7,%8,%9 kbd=%10 focus=%11")
+    // 可见条目落点（枚举序 : x,y,w,h），供 #6 底栏按钮落位与点击区取证。
+    QStringList itemParts;
+    for (const Item &it : items()) {
+        itemParts << QStringLiteral("%1:%2,%3,%4,%5")
+                         .arg(static_cast<int>(it.action))
+                         .arg(it.rect.x()).arg(it.rect.y())
+                         .arg(it.rect.width()).arg(it.rect.height());
+    }
+    return QStringLiteral("tier=%1 avail=%2 width=%3 track=%4 hidden=[%5] more=%6,%7,%8,%9 kbd=%10 focus=%11 savePending=%12 items=[%13]")
         .arg(tierLevel())
         .arg(m_availableWidth)
         .arg(width())
@@ -1869,7 +1895,9 @@ QString ControlBar::layoutDump() const{
         .arg(more.width())
         .arg(more.height())
         .arg(m_keyboardFocus ? 1 : 0)
-        .arg(m_focus);
+        .arg(m_focus)
+        .arg(m_savePending ? 1 : 0)
+        .arg(itemParts.join(u'|'));
 }
 
 // 进度块外框（滑杆 + 页码 + 左右内边距）。
@@ -1947,6 +1975,7 @@ QString ControlBar::tipText(Action action) const
         return m_zoomKind == 1 ? tr("适合窗口") : tr("查看原始尺寸（100%）");
     case Action::ZoomIn: return m_overviewActive ? tr("放大缩略图") : tr("放大");
     case Action::Rotate: return tr("旋转：左键逆时针 90°，右键顺时针 90°");
+    case Action::SaveLossless: return tr("无损保存：把当前旋转 / 翻转写回原文件（不改压缩数据）");
     case Action::Fullscreen: return tr("全屏 / 还原 (F11)");
     case Action::Prev: return tr("上一张图片 (←)");
     case Action::PageSlider:
@@ -2198,6 +2227,9 @@ void ControlBar::paintEvent(QPaintEvent *)
         case Action::Rotate:
             drawIcon(p, "arrow-rotate-counterclockwise", icon, drawInk, iconStyle);
             break;
+        case Action::SaveLossless:
+            drawIcon(p, "save", icon, drawInk, iconStyle);
+            break;
         case Action::Fullscreen: drawIcon(p, "full-screen-maximize", icon, drawInk, iconStyle); break;
         case Action::Prev: drawIcon(p, "chevron-left", icon, drawInk, iconStyle); break;
         case Action::Next: drawIcon(p, "chevron-right", icon, drawInk, iconStyle); break;
@@ -2226,6 +2258,7 @@ void ControlBar::activate(Action action, Qt::MouseButton button)
             emit rotateLeftClicked();
         }
         break;
+    case Action::SaveLossless: emit saveLosslessClicked(); break;
     case Action::Fullscreen: emit fullscreenClicked(); break;
     case Action::Prev:
         if (button == Qt::RightButton) emit prev10Clicked();

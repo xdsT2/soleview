@@ -122,7 +122,12 @@ public:
     bool cacheNextImage() const;       // 缓存下一张图片（翻页前预读，默认 true）
     int cacheSizeMb() const;           // 原图缓存上限 MB（默认 300，clamp 64..4096）
     bool alignTopWhenLarge() const;    // 图片大于窗口时显示图片顶部（默认开）
-    bool autoSaveRotate() const;       // 旋转后自动保存（默认关：旋转/翻转立即原子写回原文件）
+    // 图片旋转保存方式（#6，键 config/rotate_save_mode）：
+    //   0 = 仅预览（默认，新装与未开过自动保存的旧版）；
+    //   1 = 手动保存（旋转后底栏出独立「无损保存」按钮，点击才写回）；
+    //   2 = 自动保存（旋转落地立即无损写回；旧版 config/auto_save_rotate=true 迁入此档）。
+    int rotateSaveMode() const;
+    void setRotateSaveMode(int mode);
 
     // 鼠标（翻页批次 2：按键与手势独立映射，2026-11-20）
     // 滚轮上下独立设置，单向「无」只停用该方向；中键单击与拖动分别设置。

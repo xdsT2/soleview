@@ -222,8 +222,13 @@ private slots:
     void onRotateRight();
     void onFlipH();
     void onFlipV();
-    // 旋转后自动保存（A2）：几何操作落地后按开关原子写回原文件（见 RotateAutoSave）。
-    void maybeAutoSaveGeometry();
+    // #6 旋转保存：几何操作落地后按「仅预览 / 手动 / 自动」三模式处理待写回变更；
+    // 无损写回只改方向元数据（见 RotateLossless），不重编码压缩数据。
+    void onGeometryChanged();
+    // 手动按钮 / 自动模式共用的写回入口；成功归位净变换，失败保留重试入口。
+    void trySaveLossless();
+    // 按待保存状态同步底栏独立「无损保存」按钮显隐。
+    void updateSavePendingUi();
     void onCrop();
     void onResize();
     void onEffect(int mode);
@@ -717,10 +722,14 @@ private:
     int m_netRotation = 0;     // 净旋转角：0 / 90 / 180 / 270
     bool m_flipH = false;
     bool m_flipV = false;
-    // 旋转后自动保存（A2）：本次 rebuild 是否由旋转/翻转/不旋转触发（待写回标记）；
-    // 跳过类格式每会话每类只提示一次的去重集合。
-    bool m_geometryOpPending = false;
+    // #6 旋转保存：本次 rebuild 是否由旋转/翻转触发（待写回标记）；跳过类格式每
+    // 会话每类只提示一次的去重集合。
+    bool m_rotateSavePending = false;
     QSet<QString> m_autoSaveSkipSeen;
+    // 文件基线方向标签（读文件原始元数据；0 = 无标签/未知）；当前合成方向
+    // （文件原方向 × 屏幕净旋转/镜像），写回时作为新标签。
+    int m_fileOrientation = 0;
+    int m_composedOrientation = 1;
     bool m_negative = false;   // 反相
     qreal m_gamma = 1.0;       // Gamma 补偿（1.0 = 不变）
     bool m_zoomLocked = false; // 锁定缩放：翻页后不做适配，沿用同一比例

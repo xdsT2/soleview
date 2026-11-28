@@ -4,7 +4,7 @@
 #include "FrameNavigator.h"
 #include "RawImageLoader.h"
 #include "RawJpgGroup.h"
-#include "RotateAutoSave.h"
+#include "RotateLossless.h"
 #include "SvgLoader.h"
 
 #include <QApplication>
@@ -275,13 +275,21 @@ int main(int argc, char **argv)
         }
     }
 
-    // 7. RotateAutoSave 拦截新格式
+    // 7. RotateLossless 无损写回的格式拦截（#6：只放行已验证可安全改方向元数据的格式）
     {
-        CHECK(RotateAutoSave::unsupportedReason(QStringLiteral("a.psb")) == QStringLiteral("PSD"));
-        CHECK(RotateAutoSave::unsupportedReason(QStringLiteral("a.cr3")) == QStringLiteral("RAW"));
-        CHECK(RotateAutoSave::unsupportedReason(samplesDir + QStringLiteral("/anim.webp")) == QStringLiteral("ANIM"));
-        CHECK(RotateAutoSave::unsupportedReason(samplesDir + QStringLiteral("/anim.apng")) == QStringLiteral("ANIM"));
-        CHECK(RotateAutoSave::unsupportedReason(samplesDir + QStringLiteral("/anim_png.png")) == QStringLiteral("ANIM"));
+        const RotateLossless::Probe psb = RotateLossless::probe(QStringLiteral("a.psb"));
+        CHECK(!psb.supported && psb.reason == QStringLiteral("PSD"));
+        const RotateLossless::Probe raw = RotateLossless::probe(QStringLiteral("a.cr3"));
+        CHECK(!raw.supported && raw.reason == QStringLiteral("RAW"));
+        const RotateLossless::Probe animWebp =
+            RotateLossless::probe(samplesDir + QStringLiteral("/anim.webp"));
+        CHECK(!animWebp.supported && animWebp.reason == QStringLiteral("ANIM_WEBP"));
+        const RotateLossless::Probe animApng =
+            RotateLossless::probe(samplesDir + QStringLiteral("/anim.apng"));
+        CHECK(!animApng.supported && animApng.reason == QStringLiteral("ANIM"));
+        const RotateLossless::Probe animPng =
+            RotateLossless::probe(samplesDir + QStringLiteral("/anim_png.png"));
+        CHECK(!animPng.supported && animPng.reason == QStringLiteral("PNG"));
     }
 
     // 8. 异常/截断/假后缀/超大头安全失败

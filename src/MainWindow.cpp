@@ -101,7 +101,7 @@
 #include "ToneMap.h"
 #include "DisplayFrame.h"
 #include "RawImageLoader.h"
-#include "RotateAutoSave.h"
+#include "RotateLossless.h"
 #include "SettingsDialog.h"
 #include "Theme.h"
 #include "ThumbnailBrowser.h"
@@ -523,6 +523,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_control, &Chrome::ControlBar::zoomToggleClicked, this, &MainWindow::onZoomCapsuleToggle);
     connect(m_control, &Chrome::ControlBar::rotateLeftClicked, this, &MainWindow::onRotateLeft);
     connect(m_control, &Chrome::ControlBar::rotateRightClicked, this, &MainWindow::onRotateRight);
+    // #6 独立「无损保存」按钮：不进工具栏自定义排序体系，直连写回入口。
+    connect(m_control, &Chrome::ControlBar::saveLosslessClicked, this, &MainWindow::trySaveLossless);
     connect(m_control, &Chrome::ControlBar::fullscreenClicked, this, &MainWindow::toggleFullscreen);
     connect(m_control, &Chrome::ControlBar::lockToggled, this, &MainWindow::toggleDockLock);
     connect(m_control, &Chrome::ControlBar::prevClicked, this, &MainWindow::onPrev);
@@ -1487,6 +1489,11 @@ void MainWindow::showDockMoreMenu(const QPoint &globalPos)
         addLocal(m_pictureBorderless ? tr("退出无边框查看") : tr("无边框查看"),
                  "view", [this]() { togglePictureBorderless(); }, true,
                  m_pictureBorderless.has_value());
+    }
+    // #6 无损保存：中 / 窄档收进「更多」；宽档在岛上常驻，不进工具栏排序体系。
+    if (hidden.contains(13)) {
+        beginBlock();
+        addLocal(tr("无损保存"), "save", [this]() { trySaveLossless(); });
     }
 
     // —— 翻页与跳转（10 张跳跃/文件夹跳跃/首末原本就不在岛上，菜单始终提供）——
@@ -5056,6 +5063,11 @@ void MainWindow::showImage(const QImage &image, const QString &path, bool previe
     m_netRotation = 0;
     m_flipH = false;
     m_flipV = false;
+    // #6：主动换图清待保存状态；读文件原始方向标签作为合成基线（0 = 无标签/未知）。
+    m_rotateSavePending = false;
+    m_fileOrientation = RotateLossless::readOrientation(path);
+    m_composedOrientation = m_fileOrientation ? m_fileOrientation : 1;
+    m_autoSaveSkipSeen.clear();
     m_negative = false;
     m_gamma = 1.0;
     // GIF 透明底色（键 "config/imageproc/gif_transparent"）只影响上屏的那一份，
@@ -5883,6 +5895,37 @@ void MainWindow::runSmokeCommand(const QString &cmd)
     else if (c == QLatin1String("zoomout"))    onZoomOut();
     else if (c == QLatin1String("rotateleft")) onRotateLeft();
     else if (c == QLatin1String("rotateright")) onRotateRight();
+    // savelossless —— 走底栏「无损保存」按钮同一条写回链路（手动模式取证）。
+    else if (c == QLatin1String("savelossless")) trySaveLossless();
+    // savemode:<0|1|2> —— 运行态切换旋转保存方式（设置页下拉同键）。
+    else if (c.startsWith(QLatin1String("savemode:"))) {
+        const int mode = c.mid(9).toInt();
+        Config::instance().setRotateSaveMode(mode);
+        updateSavePendingUi();
+    }
+    // savedump[:out] —— #6 取证：模式 / 待保存 / 方向基线 / 合成方向 / 探针原因 /
+    // 最近提示 / 底栏布局一次落盘。
+    else if (c.startsWith(QLatin1String("savedump"))) {
+        const QString out = c.startsWith(QLatin1String("savedump:"))
+                                ? c.mid(9).trimmed() : QStringLiteral("Temp/save-dump.txt");
+        QFile f(out);
+        if (f.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+            const RotateLossless::Probe probe = RotateLossless::probe(m_currentPath);
+            QTextStream ts(&f);
+            ts << "label=" << qEnvironmentVariable("QUIKVIEW_PROBE_LABEL")
+               << " mode=" << Config::instance().rotateSaveMode()
+               << " pending=" << (m_rotateSavePending ? 1 : 0)
+               << " fileOrient=" << m_fileOrientation
+               << " composed=" << m_composedOrientation
+               << " netRot=" << m_netRotation
+               << " flipH=" << (m_flipH ? 1 : 0)
+               << " flipV=" << (m_flipV ? 1 : 0)
+               << " probe=" << probe.reason
+               << " toast=" << (m_toast ? m_toast->lastMessage() : QString())
+               << " " << (m_control ? m_control->layoutDump() : QStringLiteral("control=0"))
+               << "\n";
+        }
+    }
     else if (c == QLatin1String("slideshow"))  actSlideshow->trigger();
     // lockon / lockoff —— 锁定窗口大小开关（与视图菜单勾选项走同一条槽：
     // 落盘 + 落/解约束 + toast，不绕过配置）
@@ -9683,6 +9726,15 @@ void MainWindow::rotateImage(int degrees)
     // 不会在已经转过的图上再转（那样重采样损失会一遍遍叠上去）。
     m_netRotation = ((m_netRotation + degrees) % 360 + 360) % 360;
 
+    // 方向标签增量合成：文件原方向 × 本次屏幕变换。应用内「右转」= 屏幕顺时针 90°。
+    if (degrees == 90) {
+        m_composedOrientation = RotateLossless::composeRotateCw(m_composedOrientation);
+    } else if (degrees == -90) {
+        m_composedOrientation = RotateLossless::composeRotateCcw(m_composedOrientation);
+    } else if (degrees == 180 || degrees == -180) {
+        m_composedOrientation = RotateLossless::composeRotate180(m_composedOrientation);
+    }
+
     // 归一化锚点跟着画布一起转：顺 90°(u,v)→(1-v,u)，逆 90°(u,v)→(v,1-u)
     QPointF anchor = n;
     if (degrees == 90) {
@@ -9692,7 +9744,7 @@ void MainWindow::rotateImage(int degrees)
     } else if (degrees == 180 || degrees == -180) {
         anchor = QPointF(1.0 - n.x(), 1.0 - n.y());
     }
-    m_geometryOpPending = true;   // 旋转后自动保存（A2）：本次 rebuild 落地后按需写回
+    m_rotateSavePending = true;   // #6：本次 rebuild 落地后按模式决定待保存 / 自动写回
     rebuildFromSource(anchor);
 }
 
@@ -9712,7 +9764,7 @@ void MainWindow::rebuildFromSource(const QPointF &anchor)
         t.scale(1, -1);
     }
     m_originalImage = m_sourceImage.transformed(t);
-    maybeAutoSaveGeometry();   // 旋转后自动保存（A2）：写回成功会把源图与净角度归位
+    onGeometryChanged();   // #6：按三模式处理待写回变更；写回成功会把源图与净角度归位
     m_effect = 0;
     if (actEffectNone) {
         actEffectNone->setChecked(true);
@@ -9736,7 +9788,8 @@ void MainWindow::resetGeometry()
     m_netRotation = 0;
     m_flipH = false;
     m_flipV = false;
-    m_geometryOpPending = true;
+    m_composedOrientation = m_fileOrientation ? m_fileOrientation : 1;
+    m_rotateSavePending = true;   // 旋回原方向（净变换归零）：落地后清待保存状态
     rebuildFromSource(QPointF(0.5, 0.5));
 }
 
@@ -9757,8 +9810,9 @@ void MainWindow::onFlipH()
     }
     const QPointF n = m_canvas->viewCenterNormalized();
     m_flipH = !m_flipH;
+    m_composedOrientation = RotateLossless::composeFlipH(m_composedOrientation);
     // 屏幕左右镜像：锚点的 u 跟着翻，v 不动
-    m_geometryOpPending = true;
+    m_rotateSavePending = true;
     rebuildFromSource(QPointF(1.0 - n.x(), n.y()));
 }
 
@@ -9769,43 +9823,88 @@ void MainWindow::onFlipV()
     }
     const QPointF n = m_canvas->viewCenterNormalized();
     m_flipV = !m_flipV;
-    m_geometryOpPending = true;
+    m_composedOrientation = RotateLossless::composeFlipV(m_composedOrientation);
+    m_rotateSavePending = true;
     rebuildFromSource(QPointF(n.x(), 1.0 - n.y()));
 }
 
-// 旋转后自动保存（A2）：开关开且本次是几何操作时，把「几何已就位、效果未加」的
-// m_originalImage 原子写回原文件。写回成功后源图即新文件像素、净角度/翻转归零，
-// 下一次旋转从新源图重算，不会叠转；失败只 toast，视图状态保持不丢操作。
-void MainWindow::maybeAutoSaveGeometry()
+// #6 几何操作落地后的三模式分派：
+//   仅预览  —— 不探写回，待保存状态清除；
+//   手动    —— 置待保存，底栏出独立「无损保存」按钮，点击才写回；
+//   自动    —— 置待保存（失败保留重试入口），立即尝试写回；成功静默，失败轻提示。
+void MainWindow::onGeometryChanged()
 {
-    if (!m_geometryOpPending) {
+    // 净变换归零（含翻转）：待保存状态清除。
+    if (m_netRotation == 0 && !m_flipH && !m_flipV) {
+        m_rotateSavePending = false;
+        updateSavePendingUi();
         return;
     }
-    m_geometryOpPending = false;
-    if (!Config::instance().autoSaveRotate() || m_currentPath.isEmpty()
-        || m_originalImage.isNull()) {
+    const auto mode = static_cast<RotateLossless::Mode>(Config::instance().rotateSaveMode());
+    if (mode == RotateLossless::Mode::PreviewOnly) {
+        m_rotateSavePending = false;
+        updateSavePendingUi();
         return;
     }
-    const QString reason = RotateAutoSave::unsupportedReason(m_currentPath);
-    if (!reason.isEmpty()) {
-        if (!m_autoSaveSkipSeen.contains(reason)) {
-            m_autoSaveSkipSeen.insert(reason);
-            m_toast->showMessage(tr("该格式不支持自动保存"), Chrome::Toast::Tone::Warning);
+    m_rotateSavePending = true;
+    updateSavePendingUi();
+    if (mode == RotateLossless::Mode::Auto) {
+        trySaveLossless();
+    }
+}
+
+void MainWindow::updateSavePendingUi()
+{
+    if (m_control) {
+        m_control->setSavePending(m_rotateSavePending);
+    }
+}
+
+// 手动按钮 / 自动模式共用的无损写回入口。只改方向元数据，绝不重编码压缩数据；
+// 写回成功把当前预览像素作为新基线源图、净变换归零；失败保留预览角度与重试入口。
+void MainWindow::trySaveLossless()
+{
+    if (m_currentPath.isEmpty() || m_sourceImage.isNull()) {
+        return;
+    }
+    const RotateLossless::Probe probe = RotateLossless::probe(m_currentPath);
+    if (!probe.supported) {
+        if (!m_autoSaveSkipSeen.contains(probe.reason)) {
+            m_autoSaveSkipSeen.insert(probe.reason);
+            if (m_toast) {
+                m_toast->showMessage(tr("当前格式不支持无损旋转保存，仅保留预览"),
+                                      Chrome::Toast::Tone::Warning);
+            }
         }
+        // 不支持：保持预览角度；待保存状态保留，按钮作为重试入口不收起。
         return;
     }
     QString err;
-    if (RotateAutoSave::writeBack(m_currentPath, m_originalImage, err)) {
+    const bool ok = RotateLossless::writeOrientation(m_currentPath, m_composedOrientation, err);
+    if (ok) {
         m_sourceImage = m_originalImage;
+        m_fileOrientation = m_composedOrientation;
         m_netRotation = 0;
         m_flipH = false;
         m_flipV = false;
+        m_composedOrientation = m_fileOrientation ? m_fileOrientation : 1;
+        m_rotateSavePending = false;
+        m_autoSaveSkipSeen.clear();
+        updateSavePendingUi();
         if (m_metadata) {
             m_metadata->showImage(m_currentPath, m_originalImage);
         }
-        m_toast->showMessage(tr("已自动保存回原文件"), Chrome::Toast::Tone::Success);
+        const auto mode = static_cast<RotateLossless::Mode>(Config::instance().rotateSaveMode());
+        // 自动模式成功静默无提示；手动模式给一次成功反馈。
+        if (m_toast && mode == RotateLossless::Mode::Manual) {
+            m_toast->showMessage(tr("已无损保存回原文件"), Chrome::Toast::Tone::Success);
+        }
     } else {
-        m_toast->showMessage(tr("自动保存失败：%1").arg(err), Chrome::Toast::Tone::Warning);
+        if (m_toast) {
+            m_toast->showMessage(tr("无损保存失败：%1").arg(err), Chrome::Toast::Tone::Warning);
+        }
+        m_rotateSavePending = true;   // 失败保留重试入口
+        updateSavePendingUi();
     }
 }
 

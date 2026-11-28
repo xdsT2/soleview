@@ -80,6 +80,21 @@ Config::Config(const QString &path)
         m_settings.sync();
     }
 
+    // 旋转保存三模式迁移（#6，2026-11-29）：旧布尔键 config/auto_save_rotate 被新枚举
+    // config/rotate_save_mode 取代。一次性迁移：旧键存在且为 true → 自动保存(2)；
+    // 旧键为 false 或不存在（新装）→ 仅预览(0)。旧键原样保留供降级回退，打标记避免
+    // 重复迁移覆盖用户此后在设置页做的选择。
+    const QString rotateMigrated = QStringLiteral("config/etc/rotate_save_mode_migrated");
+    if (!m_settings.value(rotateMigrated, false).toBool()) {
+        int mode = 0;
+        const QString legacy = QStringLiteral("config/auto_save_rotate");
+        if (m_settings.contains(legacy) && m_settings.value(legacy, false).toBool())
+            mode = 2;
+        m_settings.setValue(QStringLiteral("config/rotate_save_mode"), mode);
+        m_settings.setValue(rotateMigrated, true);
+        m_settings.sync();
+    }
+
     migrateKeyboardToCommandIds();
 
     // J-2 防呆：启动即校正被配置隐藏的关键入口（设置…），回落可见并写日志。
@@ -533,11 +548,15 @@ bool Config::strongSharpen() const
     return m_settings.value(QStringLiteral("config/imageproc/strong_sharpen"), false).toBool();
 }
 
-bool Config::autoSaveRotate() const
+int Config::rotateSaveMode() const
 {
-    // 「旋转后自动保存」（A2）：默认关。开启后旋转/翻转立即原子写回原文件，
-    // 消费点 MainWindow::maybeAutoSaveGeometry；每次操作实时读键，改开关即时生效。
-    return m_settings.value(QStringLiteral("config/auto_save_rotate"), false).toBool();
+    // 0 仅预览 / 1 手动 / 2 自动；越界夹回 0。
+    return qBound(0, m_settings.value(QStringLiteral("config/rotate_save_mode"), 0).toInt(), 2);
+}
+
+void Config::setRotateSaveMode(int mode)
+{
+    m_settings.setValue(QStringLiteral("config/rotate_save_mode"), qBound(0, mode, 2));
 }
 
 bool Config::previewMode() const

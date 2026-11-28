@@ -3608,11 +3608,14 @@ void SettingsDialog::buildImageProcPage(QWidget *page)
                                "imageproc/strong_sharpen", false, false);
     m_liveChecks.append({ sharp, "imageproc/strong_sharpen", false, false });
 
-    // 旋转后自动保存（A2）：标准开关行，键 config/auto_save_rotate 默认关。
-    sec = beginSection(page, tr("自动保存"));
-    addSwitchRow(sec, tr("旋转后自动保存"),
-                 tr("旋转/翻转立即写回原文件；RAW 与动图不受影响"),
-                 "auto_save_rotate", false, false);
+    // 图片旋转保存方式（#6）：三档下拉，键 config/rotate_save_mode，默认仅预览。
+    // 写回只改方向元数据、不重编码压缩数据；旧版「旋转后自动保存」布尔开关已并入本档。
+    sec = beginSection(page, tr("旋转保存"));
+    addComboRow(sec, tr("图片旋转保存方式"),
+                tr("仅改预览角度，或把旋转 / 翻转无损写回原文件（不改动压缩数据）"),
+                "rotate_save_mode", QStringLiteral("0"),
+                { { "0", tr("仅预览") }, { "1", tr("手动保存") },
+                  { "2", tr("自动保存") } });
 
     sec = beginSection(page, tr("缓存与载入"));
     // 批次04 #21：缓存下一张改为即时项——打开即当场预读前后相邻图，关闭即停止发新预读。
@@ -9749,7 +9752,7 @@ void SettingsDialog::probeCfgLive(const QString &spec)
 {
     const int eq = spec.indexOf(u'=');
     const QString key = eq < 0 ? spec : spec.left(eq).trimmed();
-    const bool want = eq >= 0 && spec.mid(eq + 1).trimmed() == QLatin1String("on");
+    const QString want = eq >= 0 ? spec.mid(eq + 1).trimmed() : QString();
     QTimer::singleShot(400, this, [this, key, want]() {
         const auto navs = findChildren<QPushButton *>(QStringLiteral("navItem"));
         for (QPushButton *b : navs) {
@@ -9760,17 +9763,12 @@ void SettingsDialog::probeCfgLive(const QString &spec)
         }
         QTimer::singleShot(700, this, [this, key, want]() {
             const auto dump = [this, key](const char *tag) {
-                bool checked = false;
-                for (PillToggle *t : findChildren<PillToggle *>())
-                    if (t->property("cfgKey").toString() == key) { checked = t->isChecked(); break; }
                 Config &cfg = Config::instance();
-                const QString out = QStringLiteral("[%1] key=%2 checked=%3 getter=%4 stored=%5 present=%6\n")
-                    .arg(QString::fromLatin1(tag), key,
-                         checked ? QStringLiteral("true") : QStringLiteral("false"),
-                         cfg.autoSaveRotate() ? QStringLiteral("true") : QStringLiteral("false"),
-                         cfg.settings().value(QStringLiteral("config/auto_save_rotate"), false).toBool()
-                             ? QStringLiteral("true") : QStringLiteral("false"),
-                         cfg.settings().contains(QStringLiteral("config/auto_save_rotate")) ? QStringLiteral("1")
+                const QString out = QStringLiteral("[%1] key=%2 mode=%3 stored=%4 present=%5\n")
+                    .arg(QString::fromLatin1(tag), key)
+                    .arg(cfg.rotateSaveMode())
+                    .arg(cfg.settings().value(QStringLiteral("config/rotate_save_mode"), 0).toInt())
+                    .arg(cfg.settings().contains(QStringLiteral("config/rotate_save_mode")) ? QStringLiteral("1")
                                                                                             : QStringLiteral("0"));
                 QFile f(QStringLiteral("Temp/cfg-live-probe.txt"));
                 if (f.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text))
@@ -9778,10 +9776,14 @@ void SettingsDialog::probeCfgLive(const QString &spec)
             };
             QFile::remove(QStringLiteral("Temp/cfg-live-probe.txt"));
             dump("before");
-            for (PillToggle *t : findChildren<PillToggle *>()) {
-                if (t->property("cfgKey").toString() != key) continue;
-                if (t->isChecked() != want) t->click();   // 真实链路
-                break;
+            if (!want.isEmpty()) {
+                for (QComboBox *cb : findChildren<QComboBox *>()) {
+                    const int idx = cb->findData(want);
+                    if (idx >= 0 && cb->currentIndex() != idx) {
+                        cb->setCurrentIndex(idx);   // 真实 currentIndexChanged 链路
+                        break;
+                    }
+                }
             }
             QTimer::singleShot(500, this, [this, dump]() {
                 dump("after");

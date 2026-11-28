@@ -250,6 +250,10 @@ public:
     int page() const { return m_page; }
     void setLocked(bool locked);
     bool isLocked() const { return m_locked; }
+    // 有待保存的旋转 / 翻转变更（#6）：为真时宽档在旋转钮右侧常驻独立「无损保存」
+    // 钮；中 / 窄档收进「更多」菜单。该按钮不参与工具栏自定义排序体系。
+    void setSavePending(bool pending);
+    bool isSavePending() const { return m_savePending; }
     // 缩放胶囊独立显示（与目录进度无关）。kind: 0=自定义比例 1=原始 100%
     // 2=适合窗口；决定悬停提示（下一步操作）与点击切换语义，文案由 MainWindow 同步。
     void setZoomState(const QString &text, int kind);
@@ -306,6 +310,8 @@ signals:
     void zoomToggleClicked();   // 缩放胶囊：100% ↔ 适合窗口 循环切换
     void rotateLeftClicked();
     void rotateRightClicked();
+    // 独立「无损保存」按钮（#6）：只写方向元数据、不重编码；不挂工具栏排序体系。
+    void saveLosslessClicked();
     void fullscreenClicked();
     void lockToggled();
     void prevClicked();
@@ -339,7 +345,7 @@ protected:
 private:
     enum class Action {
         None, Open, List, GroupBy, Overview, ZoomOut, ZoomValue, ZoomIn,
-        Rotate, Fullscreen, Prev, PageSlider, PageValue, Next, Lock, More
+        Rotate, SaveLossless, Fullscreen, Prev, PageSlider, PageValue, Next, Lock, More
     };
     struct Item {
         Action action = Action::None;
@@ -374,6 +380,7 @@ private:
     QElapsedTimer m_previewClock;
     bool m_locked = false;
     bool m_weakened = false;
+    bool m_savePending = false;   // #6：有待无损写回的几何变更
     int m_page = 1;              // 1-based 当前页
     int m_pageCount = 0;         // 0 = 未打开；1 = 单张（滑杆禁用）
     int m_pressPage = 1;
@@ -542,6 +549,8 @@ public:
 
     explicit Toast(QWidget *parent = nullptr);
     void showMessage(const QString &text, Tone tone = Tone::Info);
+    // 取证探针：最近一次提示文本（空串 = 尚未提示）。
+    QString lastMessage() const { return m_text; }
     // 通知位置（键 config/notify_corner，默认 true）：true=右下角，false=顶部居中。
     void setCorner(bool corner);
     // 父窗口尺寸变化时重算几何（applyChromeLayout 调用）。
