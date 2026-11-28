@@ -94,8 +94,8 @@ add_executable(soleview WIN32
     src/HudShell.h
     src/ExifParser.cpp
     src/ExifParser.h
-    src/RotateAutoSave.cpp
-    src/RotateAutoSave.h
+    src/RotateLossless.cpp
+    src/RotateLossless.h
     src/Wallpaper.cpp
     src/Wallpaper.h
     src/BatchRename.cpp
@@ -438,6 +438,38 @@ if(BUILD_TESTING)
     add_test(NAME migration.pure COMMAND soleview-migration-test)
     soleview_reset_integrity_label(soleview-migration-test)
 
+    add_executable(soleview-rotate-save-migration-test tests/unit/rotate_save_migration_test.cpp src/Config.cpp)
+    target_include_directories(soleview-rotate-save-migration-test PRIVATE src ${CMAKE_CURRENT_SOURCE_DIR}/shared)
+    target_link_libraries(soleview-rotate-save-migration-test PRIVATE Qt6::Gui)
+    add_test(NAME rotate-save-migration.pure COMMAND soleview-rotate-save-migration-test)
+    soleview_reset_integrity_label(soleview-rotate-save-migration-test)
+
+    add_executable(soleview-rotate-lossless-test
+        tests/unit/rotate_lossless_test.cpp
+        src/DirectoryLoader.cpp
+        src/ArchiveStore.cpp
+        src/ZipArchive.cpp
+        src/PsdLoader.cpp
+        src/SvgLoader.cpp
+        src/RawImageLoader.cpp
+        src/HeifLoader.cpp
+        src/ExtraImageLoader.cpp
+        src/HdrPreview.cpp
+        src/HdrExrDecode.cpp
+        src/FrameNavigator.cpp
+        src/RawJpgGroup.cpp
+        src/RotateLossless.cpp
+        src/ToneMap.cpp
+        src/Config.cpp
+    )
+    target_include_directories(soleview-rotate-lossless-test PRIVATE src third_party/psd_sdk ${CMAKE_CURRENT_SOURCE_DIR}/shared)
+    target_link_libraries(soleview-rotate-lossless-test PRIVATE Qt6::Widgets Qt6::Svg Psd)
+    if(WIN32)
+        target_link_libraries(soleview-rotate-lossless-test PRIVATE windowscodecs gdiplus)
+    endif()
+    add_test(NAME rotate-lossless.pure COMMAND soleview-rotate-lossless-test)
+    soleview_reset_integrity_label(soleview-rotate-lossless-test)
+
     add_executable(soleview-formats-test
         tests/unit/extra_formats_test.cpp
         src/DirectoryLoader.cpp
@@ -452,7 +484,7 @@ if(BUILD_TESTING)
         src/HdrExrDecode.cpp
         src/FrameNavigator.cpp
         src/RawJpgGroup.cpp
-        src/RotateAutoSave.cpp
+        src/RotateLossless.cpp
         src/ToneMap.cpp
         src/Config.cpp
     )
@@ -505,7 +537,7 @@ if(BUILD_TESTING)
         src/HdrExrDecode.cpp
         src/FrameNavigator.cpp
         src/RawJpgGroup.cpp
-        src/RotateAutoSave.cpp
+        src/RotateLossless.cpp
         src/ToneMap.cpp
         src/Config.cpp
     )
@@ -568,7 +600,7 @@ if(BUILD_TESTING)
         src/HdrExrDecode.cpp
         src/FrameNavigator.cpp
         src/RawJpgGroup.cpp
-        src/RotateAutoSave.cpp
+        src/RotateLossless.cpp
         src/ToneMap.cpp
         src/Config.cpp
     )
