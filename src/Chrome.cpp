@@ -1802,6 +1802,13 @@ QVector<ControlBar::Item> ControlBar::itemsFor(Tier t, int trackWidth) const
         place(Action::Lock, kIslandBtn);
     }
 
+    // #6 待保存态：中/窄档也把「无损保存」留在岛上、与「更多」并列直接可点，
+    // 不收进「更多」菜单（宽档在旋转钮右侧，见上方宽档分支）。命中区同 kIslandBtn。
+    if (!wide && m_savePending) {
+        x += kIslandGroupGap;
+        place(Action::SaveLossless, kIslandBtn);
+    }
+
     // —— 更多：中/窄档的兜底入口，永远排在最后 ——
     if (!wide) {
         x += kIslandGroupGap;
@@ -1825,9 +1832,8 @@ QVector<int> ControlBar::hiddenActionIds() const
     if (!wide) {
         out << 6 << 7 << 9;   // 旋转 / 全屏 / 进度滑杆
     }
-    if (m_savePending && !wide) {
-        out << 13;            // #6 无损保存（中 / 窄档收进「更多」）
-    }
+    // #6 「无损保存」在中/窄档待保存态也直接上岛（见 itemsFor），不进「更多」；
+    // 非待保存态该按钮本就不存在，无需藏入菜单。
     if (m_tier == Tier::Narrow) {
         out << 10 << 12;      // 页码 / 锁定
     }

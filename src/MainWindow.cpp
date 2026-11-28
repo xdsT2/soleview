@@ -1490,7 +1490,8 @@ void MainWindow::showDockMoreMenu(const QPoint &globalPos)
                  "view", [this]() { togglePictureBorderless(); }, true,
                  m_pictureBorderless.has_value());
     }
-    // #6 无损保存：中 / 窄档收进「更多」；宽档在岛上常驻，不进工具栏排序体系。
+    // #6 无损保存：三档待保存态都直接上岛（宽档旋转钮右侧；中/窄档与「更多」并列），
+    // 不进工具栏排序体系。id 13 现已不再由 hiddenActionIds 上报，本分支仅作防御性兜底。
     if (hidden.contains(13)) {
         beginBlock();
         addLocal(tr("无损保存"), "save", [this]() { trySaveLossless(); });
