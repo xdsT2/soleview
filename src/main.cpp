@@ -8,6 +8,7 @@
 #include <QFileInfo>
 #include <QFont>
 #include <QIcon>
+#include <QImageReader>
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QLocale>
@@ -16,6 +17,7 @@
 #include <QTimer>
 #include <QTranslator>
 #include "Config.h"
+#include "DecodeLimits.h"
 #include "LanguageRuntime.h"
 #include "MainWindow.h"
 #include "Theme.h"
@@ -65,6 +67,11 @@ int main(int argc, char *argv[])
     // 高 DPI：Qt6 默认开启，这里显式声明保证跨平台一致
     QApplication app(argc, argv);
     PerfProbe::mark(PerfProbe::StartupSequence, "startup-qt-ready", "");
+    // 解码内存门限（BUG-20261127-02）：Qt 6 默认只允许单次解码分配 256 MB，
+    // 超过就让 QImageReader 直接失败，6400 万～1 亿像素的大图因此根本打不开，
+    // 还被误报成「文件可能已损坏」。抬到与 DecodeLimits 门限相称的额度；
+    // 门限之外由各处 exceeds() 在解码前拒绝，不会真去申请几十 GB。
+    QImageReader::setAllocationLimit(DecodeLimits::kAllocationLimitMb);
     QApplication::setApplicationName(QStringLiteral("SoleView"));
     QApplication::setApplicationVersion(QStringLiteral(SOLEVIEW_VERSION));
     QApplication::setOrganizationName(QStringLiteral("SoleView"));
