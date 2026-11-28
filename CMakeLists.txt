@@ -412,6 +412,13 @@ if(BUILD_TESTING)
     add_test(NAME minimap.pure COMMAND soleview-minimap-test)
     soleview_reset_integrity_label(soleview-minimap-test)
 
+    # BUG-20261127-02：全量解码门限纯逻辑（DecodeLimits，header-only，只需 QSize）。
+    add_executable(soleview-decodelimits-test tests/unit/decode_limits_test.cpp)
+    target_include_directories(soleview-decodelimits-test PRIVATE src)
+    target_link_libraries(soleview-decodelimits-test PRIVATE Qt6::Core)
+    add_test(NAME decodelimits.pure COMMAND soleview-decodelimits-test)
+    soleview_reset_integrity_label(soleview-decodelimits-test)
+
     # HDR/EXR SDR 预览曲线纯逻辑单测（需求池 I3-2）：不依赖 Qt，只测曝光计量与曲线。
     add_executable(soleview-hdrpreview-test
         tests/unit/hdr_preview_test.cpp

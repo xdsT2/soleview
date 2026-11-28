@@ -2059,6 +2059,10 @@
             <source>该 PSD 未保存兼容性预览；请在 Photoshop「首选项 → 文件处理」勾选</source>
             <translation>This PSD has no compatibility preview; enable it in Photoshop "Preferences → File Handling"</translation>
         </message>
+        <message>
+            <source>图片过大，超出可解码尺寸（单边上限 30000 像素、总量上限 1 亿像素），请先用其他工具缩小后再打开</source>
+            <translation>The image is too large: it exceeds the decodable size (max 30000 pixels per side, 100 million pixels in total). Shrink it with another tool before opening.</translation>
+        </message>
     </context>
         <context>
         <name>MetadataPanel</name>
@@ -4798,6 +4802,10 @@ Restored the original value; nothing was written to the config.</translation>
             <source>包内文件解码失败</source>
             <translation>Failed to decode the file inside the archive</translation>
         </message>
+        <message>
+            <source>包内图片超出可解码尺寸</source>
+            <translation>The image inside the archive exceeds the decodable size</translation>
+        </message>
     </context>
         <context>
         <name>RotateAutoSave</name>
@@ -5166,6 +5174,13 @@ Restored the original value; nothing was written to the config.</translation>
         <message>
             <source>视野 %1°</source>
             <translation>Field of view %1°</translation>
+        </message>
+    </context>
+        <context>
+        <name>PanoGlobe</name>
+        <message>
+            <source>图片超出可解码尺寸</source>
+            <translation>The image exceeds the decodable size</translation>
         </message>
     </context>
 </TS>

@@ -328,7 +328,7 @@
         </message>
         <message>
             <source>以 360° 查看</source>
-            <translation type="unfinished"></translation>
+            <translation>以 360° 檢視</translation>
         </message>
     </context>
         <context>
@@ -2058,6 +2058,10 @@
         <message>
             <source>压缩包内文件暂不支持此操作</source>
             <translation>壓縮檔內檔案暫不支援此操作</translation>
+        </message>
+        <message>
+            <source>图片过大，超出可解码尺寸（单边上限 30000 像素、总量上限 1 亿像素），请先用其他工具缩小后再打开</source>
+            <translation>圖片過大，超出可解碼尺寸（單邊上限 30000 像素、總量上限 1 億像素），請先用其他工具縮小後再開啟</translation>
         </message>
     </context>
         <context>
@@ -4798,6 +4802,10 @@ https://github.com/xdsT2/soleview</translation>
             <source>包内文件解码失败</source>
             <translation>壓縮檔內檔案解碼失敗</translation>
         </message>
+        <message>
+            <source>包内图片超出可解码尺寸</source>
+            <translation>壓縮檔內的圖片超出可解碼尺寸</translation>
+        </message>
     </context>
         <context>
         <name>RotateAutoSave</name>
@@ -5166,6 +5174,13 @@ https://github.com/xdsT2/soleview</translation>
         <message>
             <source>视野 %1°</source>
             <translation>視野 %1°</translation>
+        </message>
+    </context>
+        <context>
+        <name>PanoGlobe</name>
+        <message>
+            <source>图片超出可解码尺寸</source>
+            <translation>圖片超出可解碼尺寸</translation>
         </message>
     </context>
 </TS>

@@ -328,7 +328,7 @@
         </message>
         <message>
             <source>以 360° 查看</source>
-            <translation type="unfinished"></translation>
+            <translation>Ver como 360°</translation>
         </message>
     </context>
         <context>
@@ -2058,6 +2058,10 @@
         <message>
             <source>该 PSD 未保存兼容性预览；请在 Photoshop「首选项 → 文件处理」勾选</source>
             <translation>Este PSD no tiene vista previa de compatibilidad; actívala en Photoshop «Preferencias → Administración de archivos»</translation>
+        </message>
+        <message>
+            <source>图片过大，超出可解码尺寸（单边上限 30000 像素、总量上限 1 亿像素），请先用其他工具缩小后再打开</source>
+            <translation>La imagen es demasiado grande: supera el tamaño decodificable (máximo 30000 píxeles por lado y 100 millones de píxeles en total). Redúzcala con otra herramienta antes de abrirla.</translation>
         </message>
     </context>
         <context>
@@ -4798,6 +4802,10 @@ Valor original restaurado; nada se escribió en la configuración.</translation>
             <source>包内文件解码失败</source>
             <translation>Falló la decodificación del archivo dentro del comprimido</translation>
         </message>
+        <message>
+            <source>包内图片超出可解码尺寸</source>
+            <translation>La imagen dentro del archivo comprimido supera el tamaño decodificable</translation>
+        </message>
     </context>
         <context>
         <name>RotateAutoSave</name>
@@ -5166,6 +5174,13 @@ Valor original restaurado; nada se escribió en la configuración.</translation>
         <message>
             <source>视野 %1°</source>
             <translation>Campo de visión %1°</translation>
+        </message>
+    </context>
+        <context>
+        <name>PanoGlobe</name>
+        <message>
+            <source>图片超出可解码尺寸</source>
+            <translation>La imagen supera el tamaño decodificable</translation>
         </message>
     </context>
 </TS>

@@ -29,6 +29,7 @@
 #include <QVBoxLayout>
 
 #include "Config.h"
+#include "DecodeLimits.h"   // BUG-20261127-02：转换同样受解码门限约束
 #include "ExtraImageLoader.h"
 #include "HeifLoader.h"
 #include "PsdLoader.h"
@@ -523,6 +524,11 @@ QImage readBatchInput(const QString &path, bool autoTransform)
     }
     QImageReader reader(path);
     reader.setAutoTransform(autoTransform);
+    // 门限外的图不转换：批量转换没有降采样选项，解亿级图只会把内存打穿
+    // （BUG-20261127-02），按「读取失败」计进失败名单。
+    if (DecodeLimits::exceeds(reader.size())) {
+        return QImage();
+    }
     QImage img = reader.read();
     if (!img.isNull()) {
         return img;

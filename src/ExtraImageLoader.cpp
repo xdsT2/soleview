@@ -1,5 +1,6 @@
 #include "ExtraImageLoader.h"
 
+#include "DecodeLimits.h"   // 全量解码门限（BUG-20261127-02）与主程序同源
 #include "HeifLoader.h"
 #include "HdrExrDecode.h"
 #include "MappedFile.h"
@@ -54,8 +55,6 @@ namespace {
 
 constexpr qint64 kMaxFileBytes = 256LL * 1024 * 1024;
 constexpr qint64 kMaxVectorBytes = 8LL * 1024 * 1024;
-constexpr int kMaxDim = 30000;
-constexpr quint64 kMaxPixels = 100000000ULL;
 constexpr int kMaxVectorEdge = 4096;
 constexpr quint64 kMaxVectorPixels = 8000000ULL;
 constexpr int kMaxAnimFrames = 512;
@@ -73,10 +72,8 @@ void setFail(const QString &msg, LoadErrorCategory cat, QString *errOut, LoadErr
 
 bool validRasterSize(int w, int h)
 {
-    if (w <= 0 || h <= 0 || w > kMaxDim || h > kMaxDim) {
-        return false;
-    }
-    return quint64(w) * quint64(h) <= kMaxPixels;
+    // 门限口径统一在 DecodeLimits（单边 30000 / 总量 1 亿），不在这里另立一份。
+    return w > 0 && h > 0 && !DecodeLimits::exceeds(QSize(w, h));
 }
 
 QSize clampVectorSize(int natW, int natH, const QSize &box, bool allowUpscale)

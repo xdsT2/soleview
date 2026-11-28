@@ -6,6 +6,7 @@
 //                     [--bench <帧数>] [--bench-shot <输出png>]
 // 退出码：0 正常 / 2 参数或图片不可读。
 // 本进程不读写 SoleView 配置，关闭即结束；主程序的原图与缩放状态不受影响。
+#include "DecodeLimits.h"   // BUG-20261127-02：与主程序同一套解码门限
 #include "PanoGlobe.h"
 #include "PanoWindow.h"
 
@@ -14,6 +15,7 @@
 #include <QDebug>
 #include <QFile>
 #include <QFileInfo>
+#include <QImageReader>
 #include <QScreen>
 #include <QTimer>
 #include <cstdio>
@@ -42,6 +44,9 @@ bool toDouble(const QString &text, double *out)
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    // 与主程序同一套解码内存口径（BUG-20261127-02），否则全景组件还卡在
+    // Qt 默认的 256 MB 单次分配上限上。
+    QImageReader::setAllocationLimit(DecodeLimits::kAllocationLimitMb);
     QApplication::setApplicationName(QStringLiteral("SoleView Panorama"));
     QApplication::setApplicationVersion(QStringLiteral(SOLEVIEW_PANO_VERSION));
 

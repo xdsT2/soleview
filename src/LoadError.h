@@ -11,6 +11,7 @@ enum class LoadErrorCategory {
     Corrupt,          // 头部合法但图像数据读取失败：截断、坏块、I/O 失败
     Unsupported,      // 魔数不匹配，或不在支持白名单里
     NoCompatPreview,  // PSD/PSB 专属：结构可解析，但内嵌合成预览缺失
+    TooLarge,         // 尺寸超出解码门限（DecodeLimits）：没去申请内存，不是文件坏
 };
 
 Q_DECLARE_METATYPE(LoadErrorCategory)
