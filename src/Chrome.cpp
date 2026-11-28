@@ -1468,6 +1468,7 @@ constexpr int kIslandGroupGap = 3;
 constexpr int kIslandTrackWide = 120;      // Floating 定稿滑条宽 120（只有宽档带滑杆）
 constexpr int kCapsuleTrackWide = 240;     // Capsule 长滑条：圆头轨道明显长于悬浮岛
 constexpr int kEdgeTrackMax = 320;         // Edge 滑条上限：最大化窗口时两侧留白，不拉到边
+constexpr int kEdgeTrackMin = 48;          // Edge 窄档滑条最小可用长度（下限，不收走）
 constexpr int kZoomCapsuleW = 52;   // 缩放胶囊：点击在 100% / 适合窗口 间切换
 constexpr int kZoomCapsuleH = 30;   // 与按钮同高，8px 圆角（不再是全圆胶囊）
 constexpr int kPageValueW = 41;
@@ -1713,7 +1714,8 @@ void ControlBar::recomputeWidth()
     const bool edge = (m_style == Style::Edge);
     const bool capsule = (m_style == Style::Capsule);
     m_groupOffset = 0;   // 宽度测算先按左端起排，居中偏移在末尾按自然宽反推
-    // 只有宽档带进度滑杆；中/窄档滑杆收进「更多」，页码/倍率占独立宽度。
+    // 宽档带进度滑杆；悬浮两套的中/窄档滑杆收进「更多」。Edge 窄档按口径把
+    // 滑条压到最小可用长度（48）继续保留，翻页按钮保持，不整条收走。
     if (m_tier == Tier::Wide) {
         if (edge) {
             // 操作区自然宽（不含滑条）；滑条在剩余宽度内取 [下限, 上限]，
@@ -1724,22 +1726,24 @@ void ControlBar::recomputeWidth()
             // 两套悬浮：轨道长度随样式定稿（Capsule 长滑条，Floating 120）。
             m_trackWidth = capsule ? kCapsuleTrackWide : kIslandTrackWide;
         }
+    } else if (edge && m_tier == Tier::Narrow) {
+        m_trackWidth = kEdgeTrackMin;
     } else {
         m_trackWidth = 0;
     }
     int width = naturalWidthFor(m_tier, m_trackWidth);
     // 宽档极窄窗：先缩短轨道（下限 48），保住翻页热区与每个按钮的点击面积。
-    if (width > m_availableWidth && m_trackWidth > 48) {
-        m_trackWidth = qMax(48, m_trackWidth - (width - m_availableWidth));
+    if (width > m_availableWidth && m_trackWidth > kEdgeTrackMin) {
+        m_trackWidth = qMax(kEdgeTrackMin, m_trackWidth - (width - m_availableWidth));
         width = naturalWidthFor(m_tier, m_trackWidth);
     }
     m_preferredWidth = width;
     // 悬浮：任何档位都不得宽于可用宽度（宁可两侧留白，也不让岛被窗口裁掉）；
-    // 贴边：只有宽档（带长滑条）占满可用宽横向铺开，中/窄档没有滑条、按自然宽
-    // 收成一条居中贴底的短条——否则窄档只剩三个按钮时会拖出一条全宽空白带。
-    const bool fillWidth = edge && m_tier == Tier::Wide;
+    // 贴边：外壳任何档位都铺满可用宽度，只有内部按钮组 / 滑条随档位变化并整组居中，
+    // 背景板不跟着内容宽度塌成小方块。
+    const bool fillWidth = edge;
     setFixedWidth(fillWidth ? m_availableWidth : qMin(width, m_availableWidth));
-    // Edge 宽档：整组（操作区 + 滑条）在满宽条内水平居中；其余样式从左端起排。
+    // Edge：整组（操作区 + 滑条）在满宽条内水平居中；其余样式从左端起排。
     if (fillWidth) {
         const int total = naturalWidthFor(m_tier, m_trackWidth);
         m_groupOffset = qMax(0, (m_availableWidth - total) / 2 - kIslandPadX);
@@ -1760,6 +1764,7 @@ QVector<ControlBar::Item> ControlBar::itemsFor(Tier t, int trackWidth) const
     const int y = kIslandY;
     const bool wide = t == Tier::Wide;
     const bool medium = t == Tier::Medium;
+    const bool edge = (m_style == Style::Edge);
 
     auto place = [&](Action a, int w, int h = kIslandBtn) {
         out.append(Item{ a, QRect(x, y + (kIslandBtn - h) / 2, w, h) });
@@ -1811,6 +1816,11 @@ QVector<ControlBar::Item> ControlBar::itemsFor(Tier t, int trackWidth) const
         // 中档没有滑条，页码是唯一的进度读数，保留常驻。
         place(Action::PageValue, kPageValueW);
         x += 8;
+    } else if (edge) {
+        // Edge 窄档：滑条压到最小长度保留（其余样式窄档整条收进「更多」），翻页按钮在后。
+        x += kProgressPadX;
+        place(Action::PageSlider, trackWidth);
+        x += 8;
     }
     place(Action::Next, kIslandNavBtn, kIslandNavBtn);
 
@@ -1834,6 +1844,7 @@ QVector<int> ControlBar::hiddenActionIds() const
     QVector<int> out;
     const bool wide = m_tier == Tier::Wide;
     const bool medium = m_tier == Tier::Medium;
+    const bool edge = (m_style == Style::Edge);
     if (!wide) {
         out << 0 << 1 << 2;   // 打开 / 总览 / 缩略图或分组
     }
@@ -1841,7 +1852,10 @@ QVector<int> ControlBar::hiddenActionIds() const
         out << 3 << 4 << 5;   // 缩小 / 倍率 / 放大
     }
     if (!wide) {
-        out << 6 << 7 << 9;   // 旋转 / 全屏 / 进度滑杆
+        out << 6 << 7;        // 旋转 / 全屏
+        // 进度滑杆：Edge 窄档压到 48 保留，不进隐藏表；其余样式非宽档收走。
+        if (!(edge && m_tier == Tier::Narrow))
+            out << 9;
     }
     if (m_tier == Tier::Narrow) {
         out << 10 << 12;      // 页码 / 锁定

@@ -90,11 +90,17 @@ int main(int argc, char **argv)
             CHECK(bar.trackWidth() == c.expectTrack);
         }
 
-        // 窄窗：轨道收起（中/窄档无滑条），控件宽不得压过可用宽，按钮热区保留。
+        // 窄窗：悬浮两套轨道收起；Edge 外壳铺满可用宽、滑条压到 48 保留且不进隐藏表。
         bar.setAvailableWidth(240);
-        CHECK(bar.trackWidth() == 0);
-        CHECK(bar.width() <= 240);
-        CHECK(bar.preferredWidth() <= 240 || bar.width() <= 240);
+        if (c.style == Style::Edge) {
+            CHECK(bar.width() == 240);
+            CHECK(bar.trackWidth() == 48);
+            CHECK(!hasHidden(bar.hiddenActionIds(), 9));
+        } else {
+            CHECK(bar.trackWidth() == 0);
+            CHECK(bar.width() <= 240);
+            CHECK(bar.preferredWidth() <= 240 || bar.width() <= 240);
+        }
     }
 
     // —— 3. 单张图：滑条禁用但几何不崩；多图目录宽档轨道在位 ——

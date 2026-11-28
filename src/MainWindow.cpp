@@ -825,11 +825,8 @@ void MainWindow::applyChromeLayout()
         // 贴边：整条贴住内容区下沿、横跨全宽（宽度由 ControlBar 按可用宽自己固定）。
         m_control->setAvailableWidth(w);
         if (m_control->style() == Chrome::ControlBar::Style::Edge) {
-            // 贴边宽档横跨全宽；贴边中/窄档按自然宽居中贴底（无滑条时不铺空白）。
-            const int cx = (m_control->tierLevel() == 0)
-                               ? x
-                               : x + (w - m_control->width()) / 2;
-            m_control->move(cx, y + h - m_control->height());
+            // 贴边：外壳任何档位都横跨全宽，按钮组在控件内部整组居中。
+            m_control->move(x, y + h - m_control->height());
         } else {
             m_control->move(x + (w - m_control->width()) / 2, y + h - 61);
         }
