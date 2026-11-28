@@ -1,5 +1,6 @@
 #include "PanoGlobe.h"
 
+#include "DecodeLimits.h"   // BUG-20261127-02：全景同样受解码门限约束
 #include "HdrExrDecode.h"
 #include "MappedFile.h"
 
@@ -79,6 +80,13 @@ bool PanoGlobe::load(const QString &path, QString *error, float exposureEv)
     } else {
         QImageReader reader(path);
         reader.setDecideFormatFromContent(false);
+        // 全景没有降采样路径：门限外的图直接拒绝，别让球面组件去申请几十 GB
+        // （BUG-20261127-02）。
+        if (DecodeLimits::exceeds(reader.size())) {
+            if (error)
+                *error = QCoreApplication::translate("PanoGlobe", "图片超出可解码尺寸");
+            return false;
+        }
         img = reader.read();
         if (img.isNull()) {
             if (error)

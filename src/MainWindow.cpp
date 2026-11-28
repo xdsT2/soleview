@@ -4849,6 +4849,13 @@ QString loadErrorAdvice(LoadErrorCategory category)
             "MainWindow", "文件可能已损坏（格式头有效，图像数据读取失败）");
     case LoadErrorCategory::Unsupported:
         return QCoreApplication::translate("MainWindow", "暂不支持该格式");
+    case LoadErrorCategory::TooLarge:
+        // BUG-20261127-02：亿级单色 TIF/BMP 以前直接闪退、后来被误报成「文件损坏」。
+        // 这里明确说是尺寸问题并给出上限，用户知道该去缩图而不是以为文件坏了。
+        return QCoreApplication::translate(
+            "MainWindow",
+            "图片过大，超出可解码尺寸（单边上限 30000 像素、总量上限 1 亿像素），"
+            "请先用其他工具缩小后再打开");
     case LoadErrorCategory::None:
     default:
         return QString();
@@ -8860,6 +8867,30 @@ void MainWindow::runSmokeCommand(const QString &cmd)
     // hdrpanel / hdrev:<档> —— HDR 浮层验收（H1-8）：开合面板、设曝光。
     else if (c == QLatin1String("hdrpanel")) {
         toggleHdrPanel();
+    }
+    // hdrevprobe:<out.txt> —— 直接用当前 EV 同步解码当前图并写均值（隔离“解码 vs 上屏”）。
+    else if (c.startsWith(QLatin1String("hdrevprobe:"))) {
+        QString err;
+        LoadErrorCategory cat = LoadErrorCategory::None;
+        const QImage im = ExtraImageLoader::load(m_currentPath, QSize(), &err, &cat, false,
+                                                 float(Config::instance().hdrExposureEv()));
+        QFile f(c.mid(11));
+        if (f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream ts(&f);
+            double sum = 0; int n = 0;
+            if (!im.isNull()) {
+                for (int y = 0; y < im.height(); y += 4) {
+                    const uchar *line = im.constScanLine(y);
+                    for (int x = 0; x < im.width(); x += 4) {
+                        sum += line[x * 3] + line[x * 3 + 1] + line[x * 3 + 2];
+                        n += 3;
+                    }
+                }
+            }
+            ts << "ev=" << Config::instance().hdrExposureEv()
+               << " null=" << (im.isNull() ? 1 : 0)
+               << " mean=" << (n ? sum / n : 0) << "\n";
+        }
     }
     else if (c.startsWith(QLatin1String("hdrev:"))) {
         applyHdrExposure(c.mid(6).toDouble());

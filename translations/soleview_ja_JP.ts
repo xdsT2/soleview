@@ -328,7 +328,7 @@
         </message>
         <message>
             <source>以 360° 查看</source>
-            <translation type="unfinished"></translation>
+            <translation>360° で表示</translation>
         </message>
     </context>
         <context>
@@ -2058,6 +2058,10 @@
         <message>
             <source>该 PSD 未保存兼容性预览；请在 Photoshop「首选项 → 文件处理」勾选</source>
             <translation>この PSD には互換性プレビューがありません。Photoshop の「環境設定 → ファイル処理」で有効にしてください</translation>
+        </message>
+        <message>
+            <source>图片过大，超出可解码尺寸（单边上限 30000 像素、总量上限 1 亿像素），请先用其他工具缩小后再打开</source>
+            <translation>画像が大きすぎます。デコード可能なサイズ（1 辺 30000 ピクセル、合計 1 億ピクセルまで）を超えています。ほかのツールで縮小してから開いてください。</translation>
         </message>
     </context>
         <context>
@@ -4798,6 +4802,10 @@ https://github.com/xdsT2/soleview</translation>
             <source>包内文件解码失败</source>
             <translation>アーカイブ内のファイルのデコードに失敗しました</translation>
         </message>
+        <message>
+            <source>包内图片超出可解码尺寸</source>
+            <translation>アーカイブ内の画像がデコード可能なサイズを超えています</translation>
+        </message>
     </context>
         <context>
         <name>RotateAutoSave</name>
@@ -5166,6 +5174,13 @@ https://github.com/xdsT2/soleview</translation>
         <message>
             <source>视野 %1°</source>
             <translation>視野 %1°</translation>
+        </message>
+    </context>
+        <context>
+        <name>PanoGlobe</name>
+        <message>
+            <source>图片超出可解码尺寸</source>
+            <translation>画像がデコード可能なサイズを超えています</translation>
         </message>
     </context>
 </TS>

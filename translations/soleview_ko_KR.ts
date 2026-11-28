@@ -328,7 +328,7 @@
         </message>
         <message>
             <source>以 360° 查看</source>
-            <translation type="unfinished"></translation>
+            <translation>360°로 보기</translation>
         </message>
     </context>
         <context>
@@ -2058,6 +2058,10 @@
         <message>
             <source>该 PSD 未保存兼容性预览；请在 Photoshop「首选项 → 文件处理」勾选</source>
             <translation>이 PSD에는 호환성 미리보기가 없습니다. Photoshop "환경 설정 → 파일 처리"에서 켜세요</translation>
+        </message>
+        <message>
+            <source>图片过大，超出可解码尺寸（单边上限 30000 像素、总量上限 1 亿像素），请先用其他工具缩小后再打开</source>
+            <translation>이미지가 너무 큽니다. 디코딩 가능한 크기(한 변 30000픽셀, 총 1억 픽셀)를 초과했습니다. 다른 도구로 축소한 뒤 다시 열어 주세요.</translation>
         </message>
     </context>
         <context>
@@ -4798,6 +4802,10 @@ https://github.com/xdsT2/soleview</translation>
             <source>包内文件解码失败</source>
             <translation>압축 파일 내 항목 디코딩 실패</translation>
         </message>
+        <message>
+            <source>包内图片超出可解码尺寸</source>
+            <translation>압축 파일 안의 이미지가 디코딩 가능한 크기를 초과했습니다</translation>
+        </message>
     </context>
         <context>
         <name>RotateAutoSave</name>
@@ -5166,6 +5174,13 @@ https://github.com/xdsT2/soleview</translation>
         <message>
             <source>视野 %1°</source>
             <translation>시야 %1°</translation>
+        </message>
+    </context>
+        <context>
+        <name>PanoGlobe</name>
+        <message>
+            <source>图片超出可解码尺寸</source>
+            <translation>이미지가 디코딩 가능한 크기를 초과했습니다</translation>
         </message>
     </context>
 </TS>

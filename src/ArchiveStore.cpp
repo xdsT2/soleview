@@ -1,6 +1,7 @@
 #include "ArchiveStore.h"
 
 #include "ArchiveKinds.h"
+#include "DecodeLimits.h"   // BUG-20261127-02：包内条目同样受解码门限约束
 
 #include <QBuffer>
 #include <QCoreApplication>
@@ -415,6 +416,19 @@ QImage ArchiveStore::decode(const QString &entryPath, const QSize &scaledTo, QSt
     }
     QImageReader reader(&buffer);
     reader.setAutoTransform(true);
+    // 门限：整图读，或者这个插件根本不认 setScaledSize（TIFF/BMP 就是这样）时，
+    // 解亿级条目就是一块几十 GB 的 QImage（BUG-20261127-02）。
+    const bool canScale = scaledTo.isValid()
+                          && reader.supportsOption(QImageIOHandler::ScaledSize);
+    if (!canScale && DecodeLimits::exceeds(reader.size())) {
+        if (error) {
+            *error = message(QT_TRANSLATE_NOOP("ArchiveStore", "包内图片超出可解码尺寸"));
+        }
+        if (category) {
+            *category = LoadErrorCategory::TooLarge;
+        }
+        return QImage();
+    }
     if (scaledTo.isValid()) {
         QSize source = reader.size();
         if (source.isValid() && source.width() > 0 && source.height() > 0) {

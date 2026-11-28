@@ -15,6 +15,7 @@
 #include <QtConcurrent/QtConcurrent>
 
 #include "Config.h"
+#include "DecodeLimits.h"   // BUG-20261127-02：全量解码的尺寸门限
 #include "DisplayFrame.h"
 #include "RawImageLoader.h"
 #include "ArchiveStore.h"   // 压缩包内条目：从内存流解码，不落盘（派单 2026-11-18）
@@ -414,7 +415,11 @@ void ImageCache::startNextPreload()
         } else {
             QImageReader reader(path);
             reader.setAutoTransform(true);
-            img = reader.read();
+            // 门限外的图不预读：预读也只是白白申请一块几十 GB 的内存，真正打开时
+            // 会按 TooLarge 明确拒绝（BUG-20261127-02）。
+            if (!DecodeLimits::exceeds(reader.size())) {
+                img = reader.read();
+            }
         }
         QMetaObject::invokeMethod(this, [this, path, img]() {
             if (m_preloadPath != path) {
@@ -507,7 +512,11 @@ void ImageCache::startDragDecode()
             QImageReader reader(path);
             reader.setAutoTransform(true);
             const QSize src = reader.size();
-            if (size.isValid() && src.isValid() && src.width() > 0 && src.height() > 0) {
+            // 门限外的图不给拖动跟手预览：多数插件（TIFF/BMP）会忽略 setScaledSize
+            // 改成整图解，等于用几十 GB 换一帧模糊图（BUG-20261127-02）。
+            if (DecodeLimits::exceeds(src)) {
+                img = QImage();
+            } else if (size.isValid() && src.isValid() && src.width() > 0 && src.height() > 0) {
                 QSize scaled = src;
                 scaled.scale(size, Qt::KeepAspectRatio);
                 if (scaled.width() > 0 && scaled.height() > 0) {
@@ -554,7 +563,7 @@ void ImageCache::startNext()
             emit fullReady(path, *m_fullCache.object(path), false);
             continue;
         }
-        PerfProbe::mark(PerfProbe::currentSeq(), "decode-start", "");
+        PerfProbe::mark(PerfProbe::currentSeq(), "decode-start", qPrintable(QStringLiteral("ev=%1").arg(m_hdrEv)));
         startFullDecode(path, m_previewSize, m_generation.load());
         return;
     }
@@ -773,16 +782,26 @@ void ImageCache::startFullDecode(const QString &path, const QSize &previewSize,
         }
         QImage rawImg;
         QString readerError;
+        LoadErrorCategory loadCategory = LoadErrorCategory::None;
         if (!rawFile) {
             QImageReader reader(path);
             reader.setAutoTransform(true);
-            rawImg = reader.read();
-            if (rawImg.isNull()) {
-                const QByteArray formats = QImageReader::supportedImageFormats().join(',');
-                readerError = QStringLiteral("QImageReader: %1; format=%2; supported=%3")
-                                  .arg(reader.errorString(),
-                                       QString::fromLatin1(reader.format()),
-                                       formats);
+            // BUG-20261127-02：门限外不落到 QImage 申请内存（1-bit 亿级 TIF 展开
+            // 就是几十 GB，OOM 闪退）。这里只读头部拿尺寸，直接按 TooLarge 回主
+            // 线程；门限内的图照旧全量解。
+            const QSize srcSize = reader.size();
+            if (DecodeLimits::exceeds(srcSize)) {
+                readerError = QStringLiteral("too-large: %1x%2").arg(srcSize.width()).arg(srcSize.height());
+                loadCategory = LoadErrorCategory::TooLarge;
+            } else {
+                rawImg = reader.read();
+                if (rawImg.isNull()) {
+                    const QByteArray formats = QImageReader::supportedImageFormats().join(',');
+                    readerError = QStringLiteral("QImageReader: %1; format=%2; supported=%3")
+                                      .arg(reader.errorString(),
+                                           QString::fromLatin1(reader.format()),
+                                           formats);
+                }
             }
         }
         // RAW 全尺寸解码同样留在本后台线程，避免回主线程同步解把窗口卡住；
@@ -795,8 +814,8 @@ void ImageCache::startFullDecode(const QString &path, const QSize &previewSize,
         }
         // 全图解码完成：后台一次性做完 ICC→sRGB / tone map，就绪帧再回主线程。
         const QImage img = prepareFrame(rawImg);
-        QMetaObject::invokeMethod(this, [this, path, img, readerError, generation]() {
-            finishFullDecode(path, img, generation, readerError);
+        QMetaObject::invokeMethod(this, [this, path, img, readerError, loadCategory, generation]() {
+            finishFullDecode(path, img, generation, readerError, loadCategory);
         }, Qt::QueuedConnection);
     });
 }
@@ -1051,6 +1070,11 @@ void ImageCache::startThumbJobs()
             // 直接 setScaledSize(方形) 会把图片硬拉到正方形——缩略图被拉伸就是这么来的。
             // EXIF 旋转 90/270 时宽高互换，判断错了同样会算歪。
             QSize src = reader.size();
+            // 门限外的图不出缩略图：插件忽略 setScaledSize 时这里会整图解，
+            // 亿级图直接换一块几十 GB 的内存（BUG-20261127-02）。
+            if (DecodeLimits::exceeds(src)) {
+                return QImage();
+            }
             if (src.isValid() && src.width() > 0 && src.height() > 0) {
                 const QImageIOHandler::Transformations t = reader.transformation();
                 if (t.testFlag(QImageIOHandler::TransformationRotate90)

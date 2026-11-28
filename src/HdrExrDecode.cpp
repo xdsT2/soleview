@@ -1,5 +1,6 @@
 #include "HdrExrDecode.h"
 
+#include "DecodeLimits.h"   // 全量解码门限（BUG-20261127-02）与主程序同源
 #include "HdrPreview.h"
 
 #include <algorithm>
@@ -19,8 +20,6 @@
 
 namespace {
 
-constexpr int kMaxDim = 30000;
-constexpr quint64 kMaxPixels = 100000000ULL;
 // 亮度统计的采样目标：约 20 万点。再多对白点几乎没有影响，只是白花 CPU。
 constexpr double kMeterSamples = 200000.0;
 
@@ -36,10 +35,8 @@ void setFail(const QString &msg, LoadErrorCategory cat, QString *errOut, LoadErr
 
 bool validRasterSize(int w, int h)
 {
-    if (w <= 0 || h <= 0 || w > kMaxDim || h > kMaxDim) {
-        return false;
-    }
-    return quint64(w) * quint64(h) <= kMaxPixels;
+    // 门限口径统一在 DecodeLimits（单边 30000 / 总量 1 亿），不在这里另立一份。
+    return w > 0 && h > 0 && !DecodeLimits::exceeds(QSize(w, h));
 }
 
 int meterStep(int w, int h)
@@ -266,7 +263,7 @@ QImage decodeRadiance(const QByteArray &data, QString *errOut, LoadErrorCategory
         }
     }
 
-    const HdrPreview::Curve curve(meter.whitePoint());
+    const HdrPreview::Curve curve(meter.whitePoint(), exposureEv);
 
     // 第二遍：回到像素起点重解，按曲线写 8bit sRGB。
     pos = pixelStart;
