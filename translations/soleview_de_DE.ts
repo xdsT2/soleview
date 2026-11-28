@@ -328,7 +328,7 @@
         </message>
         <message>
             <source>以 360° 查看</source>
-            <translation type="unfinished"></translation>
+            <translation type="unfinished" />
         </message>
     </context>
         <context>
@@ -620,7 +620,7 @@
             <source>帧进度：帧数未知</source>
             <translation>Bildfortschritt: Bildanzahl unbekannt</translation>
         </message>
-    </context>
+    <message><source>无损保存</source><translation>Verlustfrei speichern</translation></message><message><source>无损保存：把当前旋转 / 翻转写回原文件（不改压缩数据）</source><translation>Verlustfrei speichern: aktuelle Drehung/Spiegelung in die Originaldatei schreiben (komprimierte Daten unverändert)</translation></message></context>
         <context>
         <name>DirectoryLoader</name>
         <message>
@@ -1696,18 +1696,6 @@
             <translation>Bilddatei kopieren</translation>
         </message>
         <message>
-            <source>该格式不支持自动保存</source>
-            <translation>Dieses Format unterstützt kein automatisches Speichern</translation>
-        </message>
-        <message>
-            <source>已自动保存回原文件</source>
-            <translation>Automatisch in die Originaldatei gespeichert</translation>
-        </message>
-        <message>
-            <source>自动保存失败：%1</source>
-            <translation>Automatisches Speichern fehlgeschlagen: %1</translation>
-        </message>
-        <message>
             <source>锁定窗口大小</source>
             <translation>Fenstergröße sperren</translation>
         </message>
@@ -2059,7 +2047,7 @@
             <source>该 PSD 未保存兼容性预览；请在 Photoshop「首选项 → 文件处理」勾选</source>
             <translation>Dieses PSD hat keine Kompatibilitätsvorschau; bitte in Photoshop „Einstellungen → Dateiverwaltung“ aktivieren</translation>
         </message>
-    </context>
+    <message><source>当前格式不支持无损旋转保存，仅保留预览</source><translation>Dieses Format unterstützt das verlustfreie Drehen/Speichern nicht; nur Vorschau</translation></message><message><source>已无损保存回原文件</source><translation>Verlustfrei in die Originaldatei zurückgespeichert</translation></message><message><source>无损保存失败：%1</source><translation>Verlustfreies Speichern fehlgeschlagen: %1</translation></message></context>
         <context>
         <name>MetadataPanel</name>
         <message>
@@ -2803,8 +2791,8 @@
             <translation>Lesezeichen</translation>
         </message>
         <message>
-            <source>自动保存开关与书签数量上限。</source>
-            <translation>Autospeichern-Schalter und Obergrenze der Lesezeichen.</translation>
+            <source>旋转保存方式与书签数量上限。</source>
+            <translation>Speichermodus für Drehung und Lesezeichen-Obergrenze.</translation>
         </message>
         <message>
             <source>上下文菜单</source>
@@ -4053,18 +4041,6 @@ Ursprungswert wiederhergestellt; nichts in die Konfiguration geschrieben.</trans
             <translation>Diese Option ist noch nicht implementiert und wird in einer künftigen Version angeboten.</translation>
         </message>
         <message>
-            <source>自动保存</source>
-            <translation>Automatisches Speichern</translation>
-        </message>
-        <message>
-            <source>旋转后自动保存</source>
-            <translation>Nach dem Drehen automatisch speichern</translation>
-        </message>
-        <message>
-            <source>旋转/翻转立即写回原文件；RAW 与动图不受影响</source>
-            <translation>Drehen/Spiegeln schreibt sofort in die Originaldatei zurück; RAW und animierte Bilder sind nicht betroffen</translation>
-        </message>
-        <message>
             <source>双线性 (快)</source>
             <translation>Bilinear (schnell)</translation>
         </message>
@@ -4598,7 +4574,7 @@ Ursprungswert wiederhergestellt; nichts in die Konfiguration geschrieben.</trans
 「不保存」只放弃这些草稿；浏览页与图像处理/外观页的即时项（缩放记忆 / 文件名浮层 / 动画帧号 / 悬浮提示 / 强锐化 / 缓存下一张 / 缓存大小 / 大图顶部对齐 / 插值 / 快帧策略 / 翻页效果 / GIF 底色 / 画布背景）会回到进入设置时的状态，其余即时设置保留。</source>
             <translation>Ausstehend: %1\n\n„Nicht speichern“ verwirft nur diese Entwürfe; Sofort-Elemente auf den Seiten Anzeigen und Bildverarbeitung/Darstellung (Zoom-Merker / Dateinamen-Overlay / Animations-Bildnummern / Hover-Hinweise / Starkes Schärfen / Nächstes-Bild-Cache / Cache-Größe / Große Bilder oben ausrichten / Interpolation / Schnellbild-Strategie / Blättereffekt / GIF-Hintergrund / Leinwandhintergrund) kehren zum Zustand beim Öffnen der Einstellungen zurück, übrige Soforteinstellungen bleiben.</translation>
         </message>
-    </context>
+    <message><source>旋转保存</source><translation>Drehen/Speichern</translation></message><message><source>图片旋转保存方式</source><translation>Speichermodus für Drehung</translation></message><message><source>仅改预览角度，或把旋转 / 翻转无损写回原文件（不改动压缩数据）</source><translation>Nur Winkelvorschau oder Drehung/Spiegelung verlustfrei in die Originaldatei schreiben (komprimierte Daten unverändert)</translation></message><message><source>仅预览</source><translation>Nur Vorschau</translation></message><message><source>手动保存</source><translation>Manuell speichern</translation></message><message><source>自动保存</source><translation>Automatisch speichern</translation></message></context>
         <context>
         <name>ThumbnailBrowser</name>
         <message>
@@ -4792,37 +4768,6 @@ Ursprungswert wiederhergestellt; nichts in die Konfiguration geschrieben.</trans
         </message>
     </context>
         <context>
-        <name>RotateAutoSave</name>
-        <message>
-            <source>文件不存在或图像为空</source>
-            <translation>Datei fehlt oder Bild ist leer</translation>
-        </message>
-        <message>
-            <source>只读或无写权限</source>
-            <translation>Schreibgeschützt oder keine Schreibrechte</translation>
-        </message>
-        <message>
-            <source>临时文件编码失败</source>
-            <translation>Temporäre Datei konnte nicht kodiert werden</translation>
-        </message>
-        <message>
-            <source>临时文件落盘失败</source>
-            <translation>Temporäre Datei konnte nicht auf Datenträger geschrieben werden</translation>
-        </message>
-        <message>
-            <source>EXIF 方向标记改写失败</source>
-            <translation>EXIF-Ausrichtungsmarke konnte nicht umgeschrieben werden</translation>
-        </message>
-        <message>
-            <source>替换原文件失败</source>
-            <translation>Originaldatei konnte nicht ersetzt werden</translation>
-        </message>
-        <message>
-            <source>读取原文件失败</source>
-            <translation>Originaldatei konnte nicht gelesen werden</translation>
-        </message>
-    </context>
-    <context>
         <name>OverviewPanel</name>
         <message>
             <source>按日期</source>

@@ -328,7 +328,7 @@
         </message>
         <message>
             <source>以 360° 查看</source>
-            <translation type="unfinished"></translation>
+            <translation type="unfinished" />
         </message>
     </context>
         <context>
@@ -620,7 +620,7 @@
             <source>帧进度：帧数未知</source>
             <translation>프레임 진행: 프레임 수 알 수 없음</translation>
         </message>
-    </context>
+    <message><source>无损保存</source><translation>무손실 저장</translation></message><message><source>无损保存：把当前旋转 / 翻转写回原文件（不改压缩数据）</source><translation>무손실 저장: 현재 회전/반전을 원본 파일에 다시 씁니다(압축 데이터는 변경되지 않음)</translation></message></context>
         <context>
         <name>DirectoryLoader</name>
         <message>
@@ -1696,18 +1696,6 @@
             <translation>이미지 파일 복사</translation>
         </message>
         <message>
-            <source>该格式不支持自动保存</source>
-            <translation>이 형식은 자동 저장을 지원하지 않습니다</translation>
-        </message>
-        <message>
-            <source>已自动保存回原文件</source>
-            <translation>원본 파일에 자동 저장했습니다</translation>
-        </message>
-        <message>
-            <source>自动保存失败：%1</source>
-            <translation>자동 저장 실패: %1</translation>
-        </message>
-        <message>
             <source>锁定窗口大小</source>
             <translation>창 크기 고정</translation>
         </message>
@@ -2059,7 +2047,7 @@
             <source>该 PSD 未保存兼容性预览；请在 Photoshop「首选项 → 文件处理」勾选</source>
             <translation>이 PSD에는 호환성 미리보기가 없습니다. Photoshop "환경 설정 → 파일 처리"에서 켜세요</translation>
         </message>
-    </context>
+    <message><source>当前格式不支持无损旋转保存，仅保留预览</source><translation>이 형식은 무손실 회전 저장을 지원하지 않습니다. 미리보기만 유지됩니다</translation></message><message><source>已无损保存回原文件</source><translation>원본 파일에 무손실로 저장했습니다</translation></message><message><source>无损保存失败：%1</source><translation>무손실 저장 실패: %1</translation></message></context>
         <context>
         <name>MetadataPanel</name>
         <message>
@@ -2803,8 +2791,8 @@
             <translation>책갈피</translation>
         </message>
         <message>
-            <source>自动保存开关与书签数量上限。</source>
-            <translation>자동 저장 스위치와 책갈피 개수 한도.</translation>
+            <source>旋转保存方式与书签数量上限。</source>
+            <translation>회전 저장 방식과 책갈피 개수 상한입니다.</translation>
         </message>
         <message>
             <source>上下文菜单</source>
@@ -3000,7 +2988,7 @@
         </message>
         <message>
             <source>GIF / MNG 时显示底部播放控制栏，并在信息行显示「第 n/N 帧」；关闭后两者一并隐藏</source>
-            <translation>GIF / MNG일 때 아래쪽 재생 컨트롤 막대와 정보 행의 &quot;프레임 n/N&quot;을 표시합니다. 끄면 둘 다 숨겨집니다</translation>
+            <translation>GIF / MNG일 때 아래쪽 재생 컨트롤 막대와 정보 행의 "프레임 n/N"을 표시합니다. 끄면 둘 다 숨겨집니다</translation>
         </message>
         <message>
             <source>显示缩放浮标</source>
@@ -3734,7 +3722,7 @@
         </message>
         <message>
             <source>开启后打开 RAW 只提示「已在设置中禁用 RAW 解码」；已在屏上的图不撤掉</source>
-            <translation>켜면 RAW를 열 때 &quot;설정에서 RAW 디코딩이 사용 안 함입니다&quot;만 표시하며, 이미 표시된 이미지는 그대로 둡니다</translation>
+            <translation>켜면 RAW를 열 때 "설정에서 RAW 디코딩이 사용 안 함입니다"만 표시하며, 이미 표시된 이미지는 그대로 둡니다</translation>
         </message>
         <message>
             <source>下次打开 RAW 时生效</source>
@@ -4051,18 +4039,6 @@ https://github.com/xdsT2/soleview</translation>
         <message>
             <source>该选项暂未实现，将在后续版本提供。</source>
             <translation>이 옵션은 아직 구현되지 않았습니다. 이후 버전에서 제공됩니다.</translation>
-        </message>
-        <message>
-            <source>自动保存</source>
-            <translation>자동 저장</translation>
-        </message>
-        <message>
-            <source>旋转后自动保存</source>
-            <translation>회전 후 자동 저장</translation>
-        </message>
-        <message>
-            <source>旋转/翻转立即写回原文件；RAW 与动图不受影响</source>
-            <translation>회전/뒤집기는 원본 파일에 즉시 기록됩니다. RAW 및 애니메이션 이미지는 적용되지 않습니다</translation>
         </message>
         <message>
             <source>双线性 (快)</source>
@@ -4598,7 +4574,7 @@ https://github.com/xdsT2/soleview</translation>
 「不保存」只放弃这些草稿；浏览页与图像处理/外观页的即时项（缩放记忆 / 文件名浮层 / 动画帧号 / 悬浮提示 / 强锐化 / 缓存下一张 / 缓存大小 / 大图顶部对齐 / 插值 / 快帧策略 / 翻页效果 / GIF 底色 / 画布背景）会回到进入设置时的状态，其余即时设置保留。</source>
             <translation>저장 대기: %1\n\n"저장 안 함"은 이 초안만 버립니다. 보기 페이지와 이미지 처리/화면 구성 페이지의 즉시 항목(확대/축소 기억 / 파일 이름 오버레이 / 애니메이션 프레임 번호 / 마우스 오버 힌트 / 강한 선명화 / 다음 이미지 캐시 / 캐시 크기 / 큰 이미지 위쪽 정렬 / 보간 / 빠른 프레임 전략 / 페이지 넘김 효과 / GIF 바탕색 / 캔버스 배경)은 설정을 열었을 때 상태로 돌아가고 나머지 즉시 설정은 유지됩니다.</translation>
         </message>
-    </context>
+    <message><source>旋转保存</source><translation>회전 저장</translation></message><message><source>图片旋转保存方式</source><translation>회전 저장 방식</translation></message><message><source>仅改预览角度，或把旋转 / 翻转无损写回原文件（不改动压缩数据）</source><translation>각도 미리보기만 하거나, 회전/반전을 원본 파일에 무손실로 다시 씁니다(압축 데이터는 변경되지 않음)</translation></message><message><source>仅预览</source><translation>미리보기만</translation></message><message><source>手动保存</source><translation>수동 저장</translation></message><message><source>自动保存</source><translation>자동 저장</translation></message></context>
         <context>
         <name>ThumbnailBrowser</name>
         <message>
@@ -4792,37 +4768,6 @@ https://github.com/xdsT2/soleview</translation>
         </message>
     </context>
         <context>
-        <name>RotateAutoSave</name>
-        <message>
-            <source>文件不存在或图像为空</source>
-            <translation>파일이 없거나 이미지가 비어 있습니다</translation>
-        </message>
-        <message>
-            <source>只读或无写权限</source>
-            <translation>읽기 전용 또는 쓰기 권한 없음</translation>
-        </message>
-        <message>
-            <source>临时文件编码失败</source>
-            <translation>임시 파일 인코딩 실패</translation>
-        </message>
-        <message>
-            <source>临时文件落盘失败</source>
-            <translation>임시 파일 디스크 쓰기 실패</translation>
-        </message>
-        <message>
-            <source>EXIF 方向标记改写失败</source>
-            <translation>EXIF 방향 태그 재작성 실패</translation>
-        </message>
-        <message>
-            <source>替换原文件失败</source>
-            <translation>원본 파일 교체 실패</translation>
-        </message>
-        <message>
-            <source>读取原文件失败</source>
-            <translation>원본 파일을 읽지 못했습니다</translation>
-        </message>
-    </context>
-    <context>
         <name>OverviewPanel</name>
         <message>
             <source>按日期</source>

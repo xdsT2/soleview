@@ -328,7 +328,7 @@
         </message>
         <message>
             <source>以 360° 查看</source>
-            <translation type="unfinished"></translation>
+            <translation type="unfinished" />
         </message>
     </context>
         <context>
@@ -620,7 +620,7 @@
             <source>帧进度：帧数未知</source>
             <translation>影格進度：影格數未知</translation>
         </message>
-    </context>
+    <message><source>无损保存</source><translation>無損儲存</translation></message><message><source>无损保存：把当前旋转 / 翻转写回原文件（不改压缩数据）</source><translation>無損儲存：將目前旋轉 / 翻轉寫回原始檔案（不變更壓縮資料）</translation></message></context>
         <context>
         <name>DirectoryLoader</name>
         <message>
@@ -1696,18 +1696,6 @@
             <translation>複製影像檔</translation>
         </message>
         <message>
-            <source>该格式不支持自动保存</source>
-            <translation>此格式不支援自動儲存</translation>
-        </message>
-        <message>
-            <source>已自动保存回原文件</source>
-            <translation>已自動儲存回原始檔案</translation>
-        </message>
-        <message>
-            <source>自动保存失败：%1</source>
-            <translation>自動儲存失敗：%1</translation>
-        </message>
-        <message>
             <source>锁定窗口大小</source>
             <translation>鎖定視窗大小</translation>
         </message>
@@ -2059,7 +2047,7 @@
             <source>压缩包内文件暂不支持此操作</source>
             <translation>壓縮檔內檔案暫不支援此操作</translation>
         </message>
-    </context>
+    <message><source>当前格式不支持无损旋转保存，仅保留预览</source><translation>此格式不支援無損旋轉儲存，僅保留預覽</translation></message><message><source>已无损保存回原文件</source><translation>已無損儲存回原始檔案</translation></message><message><source>无损保存失败：%1</source><translation>無損儲存失敗：%1</translation></message></context>
         <context>
         <name>MetadataPanel</name>
         <message>
@@ -2803,8 +2791,8 @@
             <translation>書籤</translation>
         </message>
         <message>
-            <source>自动保存开关与书签数量上限。</source>
-            <translation>自動儲存開關與書籤數量上限。</translation>
+            <source>旋转保存方式与书签数量上限。</source>
+            <translation>旋轉儲存方式與書籤數量上限。</translation>
         </message>
         <message>
             <source>上下文菜单</source>
@@ -4053,18 +4041,6 @@ https://github.com/xdsT2/soleview</translation>
             <translation>此選項尚未實作，將於後續版本提供。</translation>
         </message>
         <message>
-            <source>自动保存</source>
-            <translation>自動儲存</translation>
-        </message>
-        <message>
-            <source>旋转后自动保存</source>
-            <translation>旋轉後自動儲存</translation>
-        </message>
-        <message>
-            <source>旋转/翻转立即写回原文件；RAW 与动图不受影响</source>
-            <translation>旋轉/翻轉立即寫回原始檔案；RAW 與動畫圖片不受影響</translation>
-        </message>
-        <message>
             <source>双线性 (快)</source>
             <translation>雙線性 (快速)</translation>
         </message>
@@ -4598,7 +4574,7 @@ https://github.com/xdsT2/soleview</translation>
 「不保存」只放弃这些草稿；浏览页与图像处理/外观页的即时项（缩放记忆 / 文件名浮层 / 动画帧号 / 悬浮提示 / 强锐化 / 缓存下一张 / 缓存大小 / 大图顶部对齐 / 插值 / 快帧策略 / 翻页效果 / GIF 底色 / 画布背景）会回到进入设置时的状态，其余即时设置保留。</source>
             <translation>待儲存：%1\n\n「不儲存」只放棄這些草稿；瀏覽頁與影像處理／外觀頁的即時項目（縮放記憶 / 檔名浮層 / 動畫影格編號 / 懸浮提示 / 強銳化 / 快取下一張 / 快取大小 / 大圖頂端對齊 / 插值 / 快照策略 / 翻頁效果 / GIF 底色 / 畫布背景）會回到進入設定時的狀態，其餘即時設定保留。</translation>
         </message>
-    </context>
+    <message><source>旋转保存</source><translation>旋轉儲存</translation></message><message><source>图片旋转保存方式</source><translation>圖片旋轉儲存方式</translation></message><message><source>仅改预览角度，或把旋转 / 翻转无损写回原文件（不改动压缩数据）</source><translation>僅預覽角度，或將旋轉 / 翻轉無損寫回原始檔案（不變更壓縮資料）</translation></message><message><source>仅预览</source><translation>僅預覽</translation></message><message><source>手动保存</source><translation>手動儲存</translation></message><message><source>自动保存</source><translation>自動儲存</translation></message></context>
         <context>
         <name>ThumbnailBrowser</name>
         <message>
@@ -4789,37 +4765,6 @@ https://github.com/xdsT2/soleview</translation>
         <message>
             <source>包内文件解码失败</source>
             <translation>壓縮檔內檔案解碼失敗</translation>
-        </message>
-    </context>
-        <context>
-        <name>RotateAutoSave</name>
-        <message>
-            <source>文件不存在或图像为空</source>
-            <translation>檔案不存在或影像為空</translation>
-        </message>
-        <message>
-            <source>只读或无写权限</source>
-            <translation>唯讀或無寫入權限</translation>
-        </message>
-        <message>
-            <source>临时文件编码失败</source>
-            <translation>暫存檔編碼失敗</translation>
-        </message>
-        <message>
-            <source>临时文件落盘失败</source>
-            <translation>暫存檔寫入磁碟失敗</translation>
-        </message>
-        <message>
-            <source>EXIF 方向标记改写失败</source>
-            <translation>EXIF 方向標記改寫失敗</translation>
-        </message>
-        <message>
-            <source>替换原文件失败</source>
-            <translation>取代原始檔案失敗</translation>
-        </message>
-        <message>
-            <source>读取原文件失败</source>
-            <translation>讀取原始檔案失敗</translation>
         </message>
     </context>
         <context>

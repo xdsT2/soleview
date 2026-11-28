@@ -328,7 +328,7 @@
         </message>
         <message>
             <source>以 360° 查看</source>
-            <translation type="unfinished"></translation>
+            <translation type="unfinished" />
         </message>
     </context>
         <context>
@@ -620,7 +620,7 @@
             <source>帧进度：帧数未知</source>
             <translation>Прогресс кадров: число кадров неизвестно</translation>
         </message>
-    </context>
+    <message><source>无损保存</source><translation>Сохранить без потерь</translation></message><message><source>无损保存：把当前旋转 / 翻转写回原文件（不改压缩数据）</source><translation>Сохранение без потерь: запись текущего поворота/отражения в исходный файл (сжатые данные не меняются)</translation></message></context>
         <context>
         <name>DirectoryLoader</name>
         <message>
@@ -1696,18 +1696,6 @@
             <translation>Копировать файл изображения</translation>
         </message>
         <message>
-            <source>该格式不支持自动保存</source>
-            <translation>Этот формат не поддерживает автосохранение</translation>
-        </message>
-        <message>
-            <source>已自动保存回原文件</source>
-            <translation>Автосохранено в исходный файл</translation>
-        </message>
-        <message>
-            <source>自动保存失败：%1</source>
-            <translation>Не удалось автосохранить: %1</translation>
-        </message>
-        <message>
             <source>锁定窗口大小</source>
             <translation>Фиксировать размер окна</translation>
         </message>
@@ -2059,7 +2047,7 @@
             <source>该 PSD 未保存兼容性预览；请在 Photoshop「首选项 → 文件处理」勾选</source>
             <translation>У этого PSD нет предпросмотра совместимости; включите его в Photoshop «Установки → Обработка файлов»</translation>
         </message>
-    </context>
+    <message><source>当前格式不支持无损旋转保存，仅保留预览</source><translation>Этот формат не поддерживает сохранение поворота без потерь; только предпросмотр</translation></message><message><source>已无损保存回原文件</source><translation>Сохранено в исходный файл без потерь</translation></message><message><source>无损保存失败：%1</source><translation>Не удалось сохранить без потерь: %1</translation></message></context>
         <context>
         <name>MetadataPanel</name>
         <message>
@@ -2803,8 +2791,8 @@
             <translation>Закладки</translation>
         </message>
         <message>
-            <source>自动保存开关与书签数量上限。</source>
-            <translation>Переключатель автосохранения и предел числа закладок.</translation>
+            <source>旋转保存方式与书签数量上限。</source>
+            <translation>Режим сохранения поворота и лимит закладок.</translation>
         </message>
         <message>
             <source>上下文菜单</source>
@@ -4053,18 +4041,6 @@ https://github.com/xdsT2/soleview</translation>
             <translation>Этот параметр пока не реализован; он появится в будущей версии.</translation>
         </message>
         <message>
-            <source>自动保存</source>
-            <translation>Автосохранение</translation>
-        </message>
-        <message>
-            <source>旋转后自动保存</source>
-            <translation>Автосохранение после поворота</translation>
-        </message>
-        <message>
-            <source>旋转/翻转立即写回原文件；RAW 与动图不受影响</source>
-            <translation>Поворот/отражение сразу записывается в исходный файл; RAW и анимированные изображения не затрагиваются</translation>
-        </message>
-        <message>
             <source>双线性 (快)</source>
             <translation>Билинейная (быстрая)</translation>
         </message>
@@ -4598,7 +4574,7 @@ https://github.com/xdsT2/soleview</translation>
 「不保存」只放弃这些草稿；浏览页与图像处理/外观页的即时项（缩放记忆 / 文件名浮层 / 动画帧号 / 悬浮提示 / 强锐化 / 缓存下一张 / 缓存大小 / 大图顶部对齐 / 插值 / 快帧策略 / 翻页效果 / GIF 底色 / 画布背景）会回到进入设置时的状态，其余即时设置保留。</source>
             <translation>Ожидают сохранения: %1\n\n«Не сохранять» отменяет только эти черновики; немедленные пункты страниц «Просмотр» и «Обработка изображений/Оформление» (память масштаба / слой имени файла / номера кадров анимации / подсказки при наведении / сильное повышение резкости / кэш следующего / размер кэша / выравнивание больших изображений по верху / интерполяция / стратегия быстрого кадра / эффект перелистывания / фон GIF / фон холста) вернутся к состоянию при открытии настроек, остальные немедленные настройки сохранятся.</translation>
         </message>
-    </context>
+    <message><source>旋转保存</source><translation>Сохранение поворота</translation></message><message><source>图片旋转保存方式</source><translation>Режим сохранения поворота</translation></message><message><source>仅改预览角度，或把旋转 / 翻转无损写回原文件（不改动压缩数据）</source><translation>Только предпросмотр угла либо запись поворота/отражения в исходный файл без потерь (сжатые данные не меняются)</translation></message><message><source>仅预览</source><translation>Только предпросмотр</translation></message><message><source>手动保存</source><translation>Сохранять вручную</translation></message><message><source>自动保存</source><translation>Сохранять автоматически</translation></message></context>
         <context>
         <name>ThumbnailBrowser</name>
         <message>
@@ -4792,37 +4768,6 @@ https://github.com/xdsT2/soleview</translation>
         </message>
     </context>
         <context>
-        <name>RotateAutoSave</name>
-        <message>
-            <source>文件不存在或图像为空</source>
-            <translation>Файл отсутствует или изображение пустое</translation>
-        </message>
-        <message>
-            <source>只读或无写权限</source>
-            <translation>Только чтение или нет прав на запись</translation>
-        </message>
-        <message>
-            <source>临时文件编码失败</source>
-            <translation>Не удалось закодировать временный файл</translation>
-        </message>
-        <message>
-            <source>临时文件落盘失败</source>
-            <translation>Не удалось сбросить временный файл на диск</translation>
-        </message>
-        <message>
-            <source>EXIF 方向标记改写失败</source>
-            <translation>Не удалось перезаписать тег ориентации EXIF</translation>
-        </message>
-        <message>
-            <source>替换原文件失败</source>
-            <translation>Не удалось заменить исходный файл</translation>
-        </message>
-        <message>
-            <source>读取原文件失败</source>
-            <translation>Не удалось прочитать исходный файл</translation>
-        </message>
-    </context>
-    <context>
         <name>OverviewPanel</name>
         <message>
             <source>按日期</source>

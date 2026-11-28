@@ -620,7 +620,7 @@
             <source>帧进度：帧数未知</source>
             <translation>Frame progress: frame count unknown</translation>
         </message>
-    </context>
+    <message><source>无损保存</source><translation>Save losslessly</translation></message><message><source>无损保存：把当前旋转 / 翻转写回原文件（不改压缩数据）</source><translation>Save losslessly: write the current rotation/flip back to the original file (compressed data unchanged)</translation></message></context>
         <context>
         <name>DirectoryLoader</name>
         <message>
@@ -1696,18 +1696,6 @@
             <translation>Copy Image File</translation>
         </message>
         <message>
-            <source>该格式不支持自动保存</source>
-            <translation>This format does not support auto-save</translation>
-        </message>
-        <message>
-            <source>已自动保存回原文件</source>
-            <translation>Auto-saved to the original file</translation>
-        </message>
-        <message>
-            <source>自动保存失败：%1</source>
-            <translation>Auto-save failed: %1</translation>
-        </message>
-        <message>
             <source>锁定窗口大小</source>
             <translation>Lock window size</translation>
         </message>
@@ -2059,7 +2047,7 @@
             <source>该 PSD 未保存兼容性预览；请在 Photoshop「首选项 → 文件处理」勾选</source>
             <translation>This PSD has no compatibility preview; enable it in Photoshop "Preferences → File Handling"</translation>
         </message>
-    </context>
+    <message><source>当前格式不支持无损旋转保存，仅保留预览</source><translation>This format does not support lossless rotation save; preview only</translation></message><message><source>已无损保存回原文件</source><translation>Saved back to the original file losslessly</translation></message><message><source>无损保存失败：%1</source><translation>Lossless save failed: %1</translation></message></context>
         <context>
         <name>MetadataPanel</name>
         <message>
@@ -2803,8 +2791,8 @@
             <translation>Bookmarks</translation>
         </message>
         <message>
-            <source>自动保存开关与书签数量上限。</source>
-            <translation>Auto-save toggle and bookmark capacity limit.</translation>
+            <source>旋转保存方式与书签数量上限。</source>
+            <translation>Rotation save mode and bookmark capacity limit.</translation>
         </message>
         <message>
             <source>上下文菜单</source>
@@ -4053,18 +4041,6 @@ Restored the original value; nothing was written to the config.</translation>
             <translation>This option is not implemented yet; it will be available in a future release.</translation>
         </message>
         <message>
-            <source>自动保存</source>
-            <translation>Auto-save</translation>
-        </message>
-        <message>
-            <source>旋转后自动保存</source>
-            <translation>Auto-save after rotation</translation>
-        </message>
-        <message>
-            <source>旋转/翻转立即写回原文件；RAW 与动图不受影响</source>
-            <translation>Rotate/flip writes back to the original file immediately; RAW and animated images are not affected</translation>
-        </message>
-        <message>
             <source>双线性 (快)</source>
             <translation>Bilinear (Fast)</translation>
         </message>
@@ -4598,7 +4574,7 @@ Restored the original value; nothing was written to the config.</translation>
 「不保存」只放弃这些草稿；浏览页与图像处理/外观页的即时项（缩放记忆 / 文件名浮层 / 动画帧号 / 悬浮提示 / 强锐化 / 缓存下一张 / 缓存大小 / 大图顶部对齐 / 插值 / 快帧策略 / 翻页效果 / GIF 底色 / 画布背景）会回到进入设置时的状态，其余即时设置保留。</source>
             <translation>Pending changes: %1\n\n"Don't save" drops only these drafts; instant items on the Browsing and Image processing/Appearance pages (zoom memory / filename overlay / animation frame numbers / hover hints / strong sharpen / cache next image / cache size / align large images to top / interpolation / fast-frame policy / page-turn effect / GIF backdrop / canvas background) return to the state when you opened settings, and other instant settings are kept.</translation>
         </message>
-    </context>
+    <message><source>旋转保存</source><translation>Rotation Save</translation></message><message><source>图片旋转保存方式</source><translation>Rotation save mode</translation></message><message><source>仅改预览角度，或把旋转 / 翻转无损写回原文件（不改动压缩数据）</source><translation>Preview the angle only, or write the rotation/flip back to the original file losslessly (compressed data unchanged)</translation></message><message><source>仅预览</source><translation>Preview only</translation></message><message><source>手动保存</source><translation>Save manually</translation></message><message><source>自动保存</source><translation>Save automatically</translation></message></context>
         <context>
         <name>ThumbnailBrowser</name>
         <message>
@@ -4792,37 +4768,6 @@ Restored the original value; nothing was written to the config.</translation>
         </message>
     </context>
         <context>
-        <name>RotateAutoSave</name>
-        <message>
-            <source>文件不存在或图像为空</source>
-            <translation>File missing or image empty</translation>
-        </message>
-        <message>
-            <source>只读或无写权限</source>
-            <translation>Read-only or no write permission</translation>
-        </message>
-        <message>
-            <source>临时文件编码失败</source>
-            <translation>Failed to encode the temporary file</translation>
-        </message>
-        <message>
-            <source>临时文件落盘失败</source>
-            <translation>Failed to flush the temporary file to disk</translation>
-        </message>
-        <message>
-            <source>EXIF 方向标记改写失败</source>
-            <translation>Failed to rewrite the EXIF orientation tag</translation>
-        </message>
-        <message>
-            <source>替换原文件失败</source>
-            <translation>Failed to replace the original file</translation>
-        </message>
-        <message>
-            <source>读取原文件失败</source>
-            <translation>Failed to read the original file</translation>
-        </message>
-    </context>
-    <context>
         <name>OverviewPanel</name>
         <message>
             <source>按日期</source>

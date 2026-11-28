@@ -27,7 +27,7 @@
 | `ToneMap` | 166 + 27 | HDR 色调映射 |
 | `GammaDialog` | 180 + 33 | Gamma 调节对话框 |
 | `OverviewPanel` | 447 + 83 | 底栏「图片总览」：全窗网格、按原始宽高比排布、单击选中 / 双击或 Enter 打开 / `Esc` 返回；打开时暂时接管快捷键 |
-| `RotateAutoSave` | 265 + 17 | 旋转后自动写回：格式白名单跳过（RAW / 动图 / 多页 TIFF / PSD），同目录临时文件 → fsync → 替换，JPEG 保留 EXIF 且 Orientation 归 1 |
+| `RotateLossless` | 1178 + 61 | 无损方向元数据写回（不重编码像素）：格式 probe 放行 / 拦截口径、D4 方向合成表、原子临时文件 → fsync → 替换；JPEG / WebP / 单页 TIFF / 已有 irot 的 HEIC 原位改方向，其余格式跳过并保留预览 |
 
 **解码与数据**
 
