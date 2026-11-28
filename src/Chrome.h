@@ -282,12 +282,17 @@ public:
     // 冒烟取证：档位、可用宽、实际宽、轨道宽、隐藏 id、更多按钮矩形一次一行。
     QString layoutDump() const;
 
-    // 底栏样式（2026-11-28《可选底栏样式》施工方案）：
+    // 底栏样式（DOCK-2 底栏样式收口，2026-11-29）：
     //   Floating = 现有悬浮控制岛（44px 高、14px 圆角、贴画布下缘 17px 居中）；
-    //   Edge     = 贴窗口下沿的扁平工具条：无圆角外壳、无投影，整体占满可用宽度，
-    //              图标列之外剩余宽度优先给进度滑条（短窗先压滑条，保留翻页）。
-    // 两套共用动作、锁定、自动显隐与文件序号，只是外壳与滑条长度不同。
-    enum class Style { Floating, Edge };
+    //   Capsule  = 第二种悬浮：全圆角长胶囊、长圆头轨道 + 大圆形滑块，整体居中
+    //              悬于窗口下缘（参考《底栏样式-长滑条参考-20261128.png》）；
+    //   Edge     = 贴窗口下沿的扁平工具条：无圆角外壳、无投影，背景铺满窗口宽度，
+    //              操作区与滑条作为一组整体水平居中，各自限宽，窄窗先压滑条。
+    // 三套共用动作、锁定、自动显隐与文件序号，只是外壳、滑条长度与排布不同。
+    enum class Style { Floating, Capsule, Edge };
+    // 配置键 ↔ 样式枚举互转；未知字符串一律回落 Floating（与 Config::dockStyle 口径一致）。
+    static Style styleFromString(const QString &key);
+    static QString styleKey(Style style);
     void setStyle(Style style);
     Style style() const { return m_style; }
 
@@ -385,6 +390,8 @@ private:
     int m_availableWidth = 2000;
     int m_preferredWidth = 0;
     int m_trackWidth = 188;
+    // Edge 宽档整组（操作区 + 滑条）在满宽条内水平居中时的左移偏移（其余样式为 0）。
+    int m_groupOffset = 0;
     Tier m_tier = Tier::Wide;
     Style m_style = Style::Floating;
     bool m_tierResolved = false;

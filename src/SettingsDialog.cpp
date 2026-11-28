@@ -55,6 +55,7 @@
 #include <QScrollBar>
 #include <QScreen>
 #include <QSet>
+#include <QSizePolicy>
 #include <QShowEvent>
 #include <QSpinBox>
 #include <QStackedWidget>
@@ -280,6 +281,165 @@ int iGet(const char *key, int def)
 {
     return Config::instance().settings().value(QStringLiteral("config/") + key, def).toInt();
 }
+
+// ---------------------------------------------------------------------------
+// DOCK-2 底栏样式预览卡：QPainter 自绘缩略示意图 + 标题/说明，选中态高亮边框
+// 与右上勾选徽标；点击回调由宿主接到隐藏数据孪生下拉，复用既有即时预览链路。
+// ---------------------------------------------------------------------------
+class DockStyleCard : public QWidget
+{
+public:
+    QString key;        // floating | capsule | edge
+    QString title;
+    QString desc;
+    std::function<void()> onClick;
+
+    explicit DockStyleCard(QWidget *parent = nullptr) : QWidget(parent)
+    {
+        setCursor(Qt::PointingHandCursor);
+        setMinimumSize(150, 120);
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        setAttribute(Qt::WA_Hover);
+    }
+
+    void setSelected(bool on)
+    {
+        if (m_selected == on)
+            return;
+        m_selected = on;
+        update();
+    }
+    bool isSelected() const { return m_selected; }
+
+protected:
+    void paintEvent(QPaintEvent *) override
+    {
+        QPainter p(this);
+        p.setRenderHint(QPainter::Antialiasing, true);
+        const QRectF r = rect().adjusted(0.5, 0.5, -0.5, -0.5);
+
+        const QColor base(UiStyle::isLight() ? QColor(255, 255, 255, 190)
+                                            : QColor(255, 255, 255, 16));
+        p.setPen(Qt::NoPen);
+        p.setBrush(base);
+        p.drawRoundedRect(r, 10, 10);
+
+        QColor border(QString::fromLatin1(UiStyle::pick("#3a3d42", "#c8ccd1")));
+        if (m_selected)
+            border = UiStyle::accent();
+        p.setPen(QPen(border, m_selected ? 1.6 : 1.0));
+        p.setBrush(Qt::NoBrush);
+        p.drawRoundedRect(r, 10, 10);
+
+        // 上半：底栏缩略示意图
+        const QRectF glyph(rect().left() + 12, 12, rect().width() - 24, 52);
+        drawGlyph(p, glyph);
+
+        // 下半：标题 + 说明
+        const QColor ink(QString::fromLatin1(UiStyle::pick("#e6e7ea", "#1f2124")));
+        const QColor muted(QString::fromLatin1(UiStyle::pick("#9aa0a6", "#626365")));
+        const QRectF textRect(rect().left() + 12, glyph.bottom() + 8,
+                               rect().width() - 24, rect().bottom() - glyph.bottom() - 12);
+        QFont f = font();
+        f.setPixelSize(12);
+        p.setFont(f);
+        p.setPen(ink);
+        const QRectF titleRect = QRectF(textRect.left(), textRect.top(),
+                                        textRect.width(), 18);
+        p.drawText(titleRect, Qt::AlignLeft | Qt::AlignVCenter, title);
+        f.setPixelSize(10);
+        p.setFont(f);
+        p.setPen(muted);
+        const QRectF descRect = QRectF(textRect.left(), titleRect.bottom() + 2,
+                                       textRect.width(), textRect.bottom() - titleRect.bottom() - 2);
+        p.drawText(descRect, Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap, desc);
+
+        // 选中勾选徽标（右上圆形底 + 白色对勾）
+        if (m_selected) {
+            const qreal d = 18;
+            const QRectF badge(rect().right() - 12 - d, 10, d, d);
+            p.setPen(Qt::NoPen);
+            p.setBrush(UiStyle::accent());
+            p.drawEllipse(badge);
+            const QPointF c = badge.center();
+            p.setPen(QPen(QColor(255, 255, 255), 1.8, Qt::SolidLine,
+                          Qt::RoundCap, Qt::RoundJoin));
+            p.drawLine(QPointF(c.x() - 4.5, c.y() + 0.5), QPointF(c.x() - 1.2, c.y() + 3.8));
+            p.drawLine(QPointF(c.x() - 1.2, c.y() + 3.8), QPointF(c.x() + 4.5, c.y() - 3.2));
+        }
+    }
+
+    void mouseReleaseEvent(QMouseEvent *e) override
+    {
+        if (e->button() == Qt::LeftButton && rect().contains(e->pos()) && onClick)
+            onClick();
+    }
+
+private:
+    void drawGlyph(QPainter &p, const QRectF &area) const
+    {
+        // 窗台基线（窗口下缘示意）
+        const QColor line(QString::fromLatin1(UiStyle::pick("#43464b", "#d4d7db")));
+        p.setPen(QPen(line, 1, Qt::SolidLine, Qt::RoundCap));
+        const qreal baseY = area.bottom() - 6;
+        p.drawLine(QPointF(area.left(), baseY), QPointF(area.right(), baseY));
+
+        const QColor bar(QString::fromLatin1(UiStyle::pick("#26282b", "#3a3d42")));
+        const QColor track(QString::fromLatin1(UiStyle::pick("#55585e", "#8a8e94")));
+        const QColor thumb(245, 245, 245);
+        const qreal barH = 12;
+        const qreal barY = baseY - barH - 4;
+
+        if (key == QLatin1String("edge")) {
+            // 贴底扁平条：铺满示意宽度；操作钮 + 滑条整组水平居中。
+            p.setPen(Qt::NoPen);
+            p.setBrush(bar);
+            p.drawRect(QRectF(area.left(), barY, area.width(), barH));
+            const qreal btn = 8;
+            const qreal trackW = 56;
+            const qreal groupW = 3 * btn + 2 * 3 + 10 + trackW;
+            qreal gx = area.center().x() - groupW / 2;
+            p.setBrush(QColor(255, 255, 255, 40));
+            for (int i = 0; i < 3; ++i) {
+                p.drawRoundedRect(QRectF(gx, barY + 2, btn, btn), 2, 2);
+                gx += btn + 3;
+            }
+            gx += 7;
+            p.setPen(QPen(track, 3, Qt::SolidLine, Qt::RoundCap));
+            p.drawLine(QPointF(gx, barY + barH / 2), QPointF(gx + trackW, barY + barH / 2));
+            p.setPen(Qt::NoPen);
+            p.setBrush(thumb);
+            p.drawEllipse(QPointF(gx + trackW * 0.4, barY + barH / 2), 4, 4);
+            return;
+        }
+
+        // 两套悬浮：短圆角岛 / 全圆长胶囊，居中悬于基线之上。
+        const bool capsule = (key == QLatin1String("capsule"));
+        const qreal barW = capsule ? area.width() - 24 : area.width() * 0.62;
+        const QRectF barRect(area.center().x() - barW / 2, barY, barW, barH);
+        p.setPen(Qt::NoPen);
+        p.setBrush(bar);
+        p.drawRoundedRect(barRect, capsule ? barH / 2.0 : 4.0, capsule ? barH / 2.0 : 4.0);
+        // 左侧小钮组
+        p.setBrush(QColor(255, 255, 255, 40));
+        qreal gx = barRect.left() + 5;
+        for (int i = 0; i < 3; ++i) {
+            p.drawRoundedRect(QRectF(gx, barY + 2, 8, 8), 2, 2);
+            gx += 11;
+        }
+        // 轨道 + 滑块（Capsule 轨道更粗、滑块更大）
+        const qreal trackL = gx + 4;
+        const qreal trackR = barRect.right() - 12;
+        p.setPen(QPen(track, capsule ? 3 : 2, Qt::SolidLine, Qt::RoundCap));
+        p.drawLine(QPointF(trackL, barY + barH / 2), QPointF(trackR, barY + barH / 2));
+        p.setPen(Qt::NoPen);
+        p.setBrush(thumb);
+        const qreal tr = capsule ? 5.0 : 3.5;
+        p.drawEllipse(QPointF(trackL + (trackR - trackL) * 0.35, barY + barH / 2), tr, tr);
+    }
+
+    bool m_selected = false;
+};
 
 // ---------------------------------------------------------------------------
 // 壳扩展注册探测（2026-11-13 修订，上下文菜单派单 §3）：
@@ -3281,21 +3441,79 @@ void SettingsDialog::buildAppearancePage(QWidget *page)
 {
     // 九页重组（2026-11-21）：主题与材质（原样）+ 画面信息（原浏览页视觉项）
     // + 画布与透明背景（原图像处理画布组）。键与即时下发链路全部不变。
-    // —— 底栏样式（2026-11-28《可选底栏样式》施工方案）——
-    // 即时预览：切换即改运行态并写盘，取消/关闭时由 rollbackImgProcBaseline
-    // 回到进入设置时的值；重启按已保存的选择构建。
-    QWidget *dockSec = beginSection(page, tr("底栏"));
-    {
-        auto *dockCombo = addComboRow(
-            dockSec, tr("底栏样式"),
-            tr("悬浮底栏浮在画布下缘；贴边底栏贴住窗口下沿，带分隔线，进度滑条更长"),
-            "dock/style", QStringLiteral("floating"),
-            { { QStringLiteral("floating"), tr("悬浮底栏") },
-              { QStringLiteral("edge"), tr("贴边底栏") } },
-            kGenComboW);
-        m_liveCombos.append({ dockCombo, QStringLiteral("dock/style"),
-                              tr("底栏样式"), QString() });
+    // —— DOCK-2 底栏自定义：三张预览卡（两套悬浮 + 一套贴底）——
+    // 即时预览：点卡即改运行态并写盘，取消/关闭由 rollbackImgProcBaseline
+    // 回到进入设置时的值；重启按已保存的选择构建。隐藏下拉是数据孪生，
+    // 卡片只负责可视化选中态与点击，链路与既有 LiveCombo 完全共用。
+    QWidget *dockSec = beginSection(page, tr("底栏自定义"));
+    QWidget *dockCardHost = groupCard(dockSec);
+    auto *dockCardRows = qobject_cast<QVBoxLayout *>(dockCardHost->layout());
+    auto *cardsRow = new QWidget(dockCardHost);
+    auto *dockCardLay = new QHBoxLayout(cardsRow);
+    dockCardLay->setContentsMargins(kGenRowPadX, kRowPadY, kGenRowPadX, kRowPadY);
+    dockCardLay->setSpacing(10);
+    if (dockCardRows)
+        dockCardRows->addWidget(cardsRow);
+
+    m_dockStyleCombo = makePopupCombo(dockCardHost);
+    m_dockStyleCombo->addItem(tr("悬浮控制岛"), QStringLiteral("floating"));
+    m_dockStyleCombo->addItem(tr("长胶囊"), QStringLiteral("capsule"));
+    m_dockStyleCombo->addItem(tr("贴底工具条"), QStringLiteral("edge"));
+    m_dockStyleCombo->hide();
+    m_liveCombos.append({ m_dockStyleCombo, QStringLiteral("dock/style"),
+                          tr("底栏样式"), QString() });
+    // 同时进普通绑定表：恢复默认 / loadFromConfig 按配置回填下拉项（卡片高亮
+    // 由 refreshDockStyleCards 跟随）；即时下发仍只走 m_liveCombos 链路。
+    m_comboBinds.append({ m_dockStyleCombo, "dock/style", QStringLiteral("floating") });
+
+    struct DockOption { QString key; QString title; QString desc; };
+    const QList<DockOption> dockOpts = {
+        { QStringLiteral("floating"), tr("悬浮控制岛"), tr("圆角短岛，浮在画布下缘") },
+        { QStringLiteral("capsule"), tr("长胶囊"), tr("全圆角长胶囊，长轨道与大滑块") },
+        { QStringLiteral("edge"),    tr("贴底工具条"), tr("扁平贴住窗口下沿，滑条更长") },
+    };
+    for (const DockOption &opt : dockOpts) {
+        auto *card = new DockStyleCard(dockCardHost);
+        card->key = opt.key;
+        card->title = opt.title;
+        card->desc = opt.desc;
+        card->setAccessibleName(opt.title);
+        card->onClick = [this, opt]() {
+            if (!m_dockStyleCombo)
+                return;
+            const int idx = m_dockStyleCombo->findData(opt.key);
+            if (idx >= 0)
+                m_dockStyleCombo->setCurrentIndex(idx);
+        };
+        m_dockCards.append(card);
+        dockCardLay->addWidget(card);
     }
+    {
+        // 初始选中态按已保存配置回填（未知值 Config 已回落 floating）。
+        const QString dockInit = sGet("dock/style", QStringLiteral("floating"));
+        const int idx = m_dockStyleCombo->findData(dockInit);
+        const QSignalBlocker b(m_dockStyleCombo);
+        m_dockStyleCombo->setCurrentIndex(idx >= 0 ? idx : 0);
+    }
+    refreshDockStyleCards();
+    connect(m_dockStyleCombo, &QComboBox::currentIndexChanged, this,
+            [this]() { refreshDockStyleCards(); });
+
+    // #9 预留：按钮排序编辑区。当前版本只放灰态说明占位，不实现拖动排序、
+    // 保存、恢复默认等任何排序功能。
+    auto *sortHost = new QWidget(dockCardHost);
+    auto *sortLay = new QVBoxLayout(sortHost);
+    sortLay->setContentsMargins(kGenRowPadX, 10, kGenRowPadX, 10);
+    sortLay->setSpacing(0);
+    auto *sortHint = new QLabel(
+        tr("按钮排序自定义（即将推出）：后续可拖动调整底栏按钮顺序、保存布局并恢复默认；当前版本暂不可用。"),
+        sortHost);
+    sortHint->setWordWrap(true);
+    sortHint->setObjectName(QStringLiteral("setNote"));
+    sortHint->setEnabled(false);
+    sortLay->addWidget(sortHint);
+    if (dockCardRows)
+        dockCardRows->addWidget(sortHost);
 
     // —— 主题 ——
     QWidget *sec = beginSection(page, tr("主题"));
@@ -7461,6 +7679,7 @@ void SettingsDialog::applyLiveCombo(int index, const QString &data)
         item.combo->setCurrentIndex(item.combo->findData(item.lastData));
         if (host)
             host->applyLiveSetting(item.key, item.lastData, nullptr);
+        refreshDockStyleCards();   // 阻断器下信号不触发，卡片高亮手动回刷
         QMessageBox::warning(this, tr("设置"),
                              tr("「%1」未能即时生效：%2\n已恢复原值，未写入配置。")
                                  .arg(item.name, error));
@@ -7473,6 +7692,21 @@ void SettingsDialog::applyLiveCombo(int index, const QString &data)
     // （滚轮/中键）与本批无关，这里仍走同一入口保持一致性。
     writeBridgeKeys();
     updateLiveNote(item.key, data);
+    refreshDockStyleCards();
+}
+
+// DOCK-2：按隐藏孪生下拉的当前值刷新三张预览卡的高亮 / 勾选态。
+void SettingsDialog::refreshDockStyleCards()
+{
+    const QString cur = m_dockStyleCombo
+                            ? m_dockStyleCombo->currentData().toString()
+                            : QStringLiteral("floating");
+    for (QWidget *w : m_dockCards) {
+        // 列表项全部为本文件内 DockStyleCard，直转即可（该类无 Q_OBJECT，不能 qobject_cast）。
+        auto *card = static_cast<DockStyleCard *>(w);
+        if (card)
+            card->setSelected(card->key == cur);
+    }
 }
 
 QLabel *SettingsDialog::addLiveNote(QWidget *page)
@@ -7619,6 +7853,8 @@ void SettingsDialog::rollbackImgProcBaseline()
                 item.combo->setCurrentIndex(idx);
             break;
         }
+        if (key == QLatin1String("dock/style"))
+            refreshDockStyleCards();   // 阻断器下卡片高亮跟随基线回刷
         for (LiveCheck &item : m_liveChecks) {
             if (key != QString::fromLatin1(item.key))
                 continue;

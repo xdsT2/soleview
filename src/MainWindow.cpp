@@ -504,10 +504,8 @@ MainWindow::MainWindow(QWidget *parent)
     m_hdrTonemap = Config::instance().hdrTonemap();   // 本版恒 false：HDR 入口已移除，旧配置不激活
 
     m_control = new Chrome::ControlBar(this);
-    // 底栏样式（2026-11-28 施工方案）：默认悬浮，配置为 edge 时用贴边工具条。
-    m_control->setStyle(Config::instance().dockStyle() == QLatin1String("edge")
-                            ? Chrome::ControlBar::Style::Edge
-                            : Chrome::ControlBar::Style::Floating);
+    // 底栏样式（DOCK-2）：默认悬浮；配置 floating|capsule|edge，未知值回落悬浮。
+    m_control->setStyle(Chrome::ControlBar::styleFromString(Config::instance().dockStyle()));
     // 锁定常显跨重启保留：锁图标是唯一入口，配置缺失时按未锁（自动隐藏）处理。
     m_dockLocked = Config::instance().dockLocked();
     m_control->setLocked(m_dockLocked);
@@ -6405,14 +6403,12 @@ void MainWindow::runSmokeCommand(const QString &cmd)
     else if (c == QLatin1String("lockdock")) { if (!m_dockLocked) toggleDockLock(); }
     else if (c == QLatin1String("unlocktop")) { if (m_topLocked) toggleTopLock(); }
     else if (c == QLatin1String("unlockdock")) { if (m_dockLocked) toggleDockLock(); }
-    // dockstyle:floating|edge —— 底栏样式探针：切换后立即按新外壳重排铬件，
-    // 供两套样式 × 深浅主题的截图验收使用（不写配置）。
+    // dockstyle:floating|capsule|edge —— 底栏样式探针：切换后立即按新外壳重排铬件，
+    // 供三档样式 × 深浅主题的截图验收使用（不写配置；未知值回落悬浮）。
     else if (c.startsWith(QLatin1String("dockstyle:"))) {
         const QString v = c.mid(10);
         if (m_control) {
-            m_control->setStyle(v == QLatin1String("edge")
-                                    ? Chrome::ControlBar::Style::Edge
-                                    : Chrome::ControlBar::Style::Floating);
+            m_control->setStyle(Chrome::ControlBar::styleFromString(v));
             applyChromeLayout();
             layoutPlayBar();
         }
@@ -11805,13 +11801,11 @@ bool MainWindow::applyLiveSetting(const QString &key, const QVariant &value, QSt
     }
 
     if (key == QLatin1String("dock/style")) {
-        // 2026-11-28《可选底栏样式》：换样式只改外壳与滑条长度，动作/锁定/
-        // 自动显隐全共用。这里同时重排铬件，播放栏、总览、缩略图栏的让位关系
-        // 都挂在 m_control 的几何上，必须立刻跟着走。
+        // DOCK-2：换样式只改外壳与滑条长度/排布，动作/锁定/自动显隐全共用。
+        // 这里同时重排铬件，播放栏、总览、缩略图栏的让位关系都挂在 m_control
+        // 的几何上，必须立刻跟着走；未知值回落悬浮。
         if (m_control) {
-            m_control->setStyle(value.toString() == QLatin1String("edge")
-                                    ? Chrome::ControlBar::Style::Edge
-                                    : Chrome::ControlBar::Style::Floating);
+            m_control->setStyle(Chrome::ControlBar::styleFromString(value.toString()));
             applyChromeLayout();
             layoutPlayBar();
         }
@@ -12103,11 +12097,10 @@ QVariant MainWindow::liveSettingValue(const QString &key) const
         return m_canvas ? (m_canvas->canvasBackdrop() == int(UiStyle::canvas::Backdrop::Solid)
                                ? QStringLiteral("solid") : QStringLiteral("checker"))
                         : Config::instance().canvasBackdrop();
-    // 底栏样式（2026-11-28 施工方案）：运行态读控件自身，回滚基线以此为准。
+    // 底栏样式（DOCK-2）：运行态读控件自身，回滚基线以此为准。
     if (key == QLatin1String("dock/style"))
-        return (m_control && m_control->style() == Chrome::ControlBar::Style::Edge)
-                   ? QStringLiteral("edge")
-                   : QStringLiteral("floating");
+        return m_control ? Chrome::ControlBar::styleKey(m_control->style())
+                        : QStringLiteral("floating");
     return QVariant();
 }
 

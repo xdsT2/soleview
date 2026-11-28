@@ -306,11 +306,15 @@ QString Config::theme() const
 
 QString Config::dockStyle() const
 {
-    // 2026-11-28《可选底栏样式》：默认悬浮，已有用户首次升级沿用现有样式。
-    // 未知值一律按悬浮处理，避免配置被手改成怪值时底栏消失。
+    // DOCK-2（2026-11-29）：三档 floating | capsule | edge；默认悬浮，已有用户
+    // 首次升级沿用现有样式。未知值一律按悬浮处理，避免配置被手改成怪值时底栏消失。
     const QString v = m_settings.value(QStringLiteral("config/dock/style"),
                                        QStringLiteral("floating")).toString();
-    return v == QLatin1String("edge") ? QStringLiteral("edge") : QStringLiteral("floating");
+    if (v == QLatin1String("capsule"))
+        return QStringLiteral("capsule");
+    if (v == QLatin1String("edge"))
+        return QStringLiteral("edge");
+    return QStringLiteral("floating");
 }
 
 bool Config::dockLocked() const

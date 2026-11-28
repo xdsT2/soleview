@@ -595,6 +595,11 @@ private:
     // 界面主题：单一 pop-up 字段，值 system / light / dark（2026-11-11 修订）。
     QComboBox *m_themeCombo = nullptr;
     PillToggle *m_blurMaterial = nullptr;  // 「磨砂材质」ui/blur_material（④ 接线生效）
+    // DOCK-2 底栏样式三选卡：隐藏 QComboBox 作为数据孪生，复用既有 LiveCombo
+    // 即时预览 / 取消回滚链路；三张卡片只负责可视化选中态与点击。
+    QComboBox *m_dockStyleCombo = nullptr;
+    QList<QWidget *> m_dockCards;
+    void refreshDockStyleCards();
 
 
     // —— 主题即时应用 ——

@@ -445,6 +445,18 @@ if(BUILD_TESTING)
     add_test(NAME migration.pure COMMAND soleview-migration-test)
     soleview_reset_integrity_label(soleview-migration-test)
 
+    # DOCK-2 底栏三档样式：映射回落 + 宽/窄档几何与轨道档位（离屏控件实测）。
+    add_executable(soleview-dockstyle-test
+        tests/unit/dock_style_test.cpp
+        src/Chrome.cpp
+        src/HudShell.cpp
+        src/AppIcon.cpp
+        src/Config.cpp)
+    target_include_directories(soleview-dockstyle-test PRIVATE src ${CMAKE_CURRENT_SOURCE_DIR}/shared)
+    target_link_libraries(soleview-dockstyle-test PRIVATE Qt6::Widgets Qt6::Svg Qt6::Gui)
+    add_test(NAME dockstyle.pure COMMAND soleview-dockstyle-test)
+    soleview_reset_integrity_label(soleview-dockstyle-test)
+
     add_executable(soleview-formats-test
         tests/unit/extra_formats_test.cpp
         src/DirectoryLoader.cpp

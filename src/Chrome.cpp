@@ -1458,13 +1458,16 @@ namespace {
 
 constexpr int kIslandH = 44;
 constexpr qreal kIslandRadius = 14.0;
+constexpr qreal kCapsuleRadius = kIslandH / 2.0;   // Capsule：两端全圆（22px）
 constexpr int kIslandPadX = 10;      // 左右端内边距（垂直内边距 7 = 44-30 除以 2）
 constexpr int kIslandBtn = 30;       // 按钮底板与点击区（含锁定）
 constexpr int kIslandNavBtn = 30;    // 上一张/下一张
 constexpr int kIslandY = (kIslandH - kIslandBtn) / 2;
 constexpr int kIslandInnerGap = 3;
 constexpr int kIslandGroupGap = 3;
-constexpr int kIslandTrackWide = 120;      // 定稿滑条宽 120（只有宽档带滑杆）
+constexpr int kIslandTrackWide = 120;      // Floating 定稿滑条宽 120（只有宽档带滑杆）
+constexpr int kCapsuleTrackWide = 240;     // Capsule 长滑条：圆头轨道明显长于悬浮岛
+constexpr int kEdgeTrackMax = 320;         // Edge 滑条上限：最大化窗口时两侧留白，不拉到边
 constexpr int kZoomCapsuleW = 52;   // 缩放胶囊：点击在 100% / 适合窗口 间切换
 constexpr int kZoomCapsuleH = 30;   // 与按钮同高，8px 圆角（不再是全圆胶囊）
 constexpr int kPageValueW = 41;
@@ -1515,6 +1518,25 @@ void ControlBar::setLocked(bool locked)
     // 锁图标的插值按动作标识保存，与窄窗换档后的按钮位置无关。
     m_feedback->setChecked(static_cast<int>(Action::Lock), locked);
     update();
+}
+
+ControlBar::Style ControlBar::styleFromString(const QString &key)
+{
+    if (key == QLatin1String("capsule"))
+        return Style::Capsule;
+    if (key == QLatin1String("edge"))
+        return Style::Edge;
+    return Style::Floating;   // 未知 / 缺省一律回落悬浮，底栏不会消失
+}
+
+QString ControlBar::styleKey(Style style)
+{
+    switch (style) {
+    case Style::Capsule: return QStringLiteral("capsule");
+    case Style::Edge:    return QStringLiteral("edge");
+    case Style::Floating: break;
+    }
+    return QStringLiteral("floating");
 }
 
 void ControlBar::setStyle(Style style)
@@ -1648,7 +1670,10 @@ int ControlBar::tierLevel() const
 
 ControlBar::Tier ControlBar::resolveTier(int availableWidth) const
 {
-    const int wideThreshold = naturalWidthFor(Tier::Wide, kIslandTrackWide) + 2 * kTierBreath;
+    // 宽档阈值按各样式定稿轨道长度算：Capsule 长轨道比 Floating 120 更宽，
+    // 阈值跟着抬高，避免窄窗误进宽档后把轨道压到下限。
+    const int baseTrack = (m_style == Style::Capsule) ? kCapsuleTrackWide : kIslandTrackWide;
+    const int wideThreshold = naturalWidthFor(Tier::Wide, baseTrack) + 2 * kTierBreath;
     const int mediumThreshold = naturalWidthFor(Tier::Medium, 0) + 2 * kTierBreath;
     // 回到更宽档要多 6 逻辑 px：阈值附近拖宽/拖窄不会来回跳档。
     if (availableWidth >= wideThreshold + (m_tier == Tier::Wide ? 0 : kTierHysteresis)) {
@@ -1686,21 +1711,24 @@ void ControlBar::setAvailableWidth(int width)
 void ControlBar::recomputeWidth()
 {
     const bool edge = (m_style == Style::Edge);
+    const bool capsule = (m_style == Style::Capsule);
+    m_groupOffset = 0;   // 宽度测算先按左端起排，居中偏移在末尾按自然宽反推
     // 只有宽档带进度滑杆；中/窄档滑杆收进「更多」，页码/倍率占独立宽度。
-    // 贴边样式按施工方案图三「图标列之外的剩余宽度优先留给滑条」：滑条 =
-    // 可用宽度 - 不含滑条的自然宽（下限 120，与悬浮同款轨道高度/滑块尺寸）。
     if (m_tier == Tier::Wide) {
         if (edge) {
+            // 操作区自然宽（不含滑条）；滑条在剩余宽度内取 [下限, 上限]，
+            // 最大化窗口时被上限卡住，两侧留白而不是拉伸到边。
             const int fixed = naturalWidthFor(Tier::Wide, 0);
-            m_trackWidth = qMax(kIslandTrackWide, m_availableWidth - fixed);
+            m_trackWidth = qBound(kIslandTrackWide, m_availableWidth - fixed, kEdgeTrackMax);
         } else {
-            m_trackWidth = kIslandTrackWide;
+            // 两套悬浮：轨道长度随样式定稿（Capsule 长滑条，Floating 120）。
+            m_trackWidth = capsule ? kCapsuleTrackWide : kIslandTrackWide;
         }
     } else {
         m_trackWidth = 0;
     }
     int width = naturalWidthFor(m_tier, m_trackWidth);
-    // 宽档极窄窗：先缩短轨道（下限 48），保留翻页热区与页码/倍率。
+    // 宽档极窄窗：先缩短轨道（下限 48），保住翻页热区与每个按钮的点击面积。
     if (width > m_availableWidth && m_trackWidth > 48) {
         m_trackWidth = qMax(48, m_trackWidth - (width - m_availableWidth));
         width = naturalWidthFor(m_tier, m_trackWidth);
@@ -1711,6 +1739,11 @@ void ControlBar::recomputeWidth()
     // 收成一条居中贴底的短条——否则窄档只剩三个按钮时会拖出一条全宽空白带。
     const bool fillWidth = edge && m_tier == Tier::Wide;
     setFixedWidth(fillWidth ? m_availableWidth : qMin(width, m_availableWidth));
+    // Edge 宽档：整组（操作区 + 滑条）在满宽条内水平居中；其余样式从左端起排。
+    if (fillWidth) {
+        const int total = naturalWidthFor(m_tier, m_trackWidth);
+        m_groupOffset = qMax(0, (m_availableWidth - total) / 2 - kIslandPadX);
+    }
     update();
 }
 
@@ -1723,7 +1756,7 @@ QVector<ControlBar::Item> ControlBar::items() const
 QVector<ControlBar::Item> ControlBar::itemsFor(Tier t, int trackWidth) const
 {
     QVector<Item> out;
-    int x = kIslandPadX;
+    int x = kIslandPadX + m_groupOffset;
     const int y = kIslandY;
     const bool wide = t == Tier::Wide;
     const bool medium = t == Tier::Medium;
@@ -1858,7 +1891,8 @@ QString ControlBar::layoutDump() const{
         hidden << QString::number(id);
     }
     const QRect more = moreButtonRect();
-    return QStringLiteral("tier=%1 avail=%2 width=%3 track=%4 hidden=[%5] more=%6,%7,%8,%9 kbd=%10 focus=%11")
+    return QStringLiteral("style=%1 tier=%2 avail=%3 width=%4 track=%5 hidden=[%6] more=%7,%8,%9,%10 kbd=%11 focus=%12")
+        .arg(styleKey(m_style))
         .arg(tierLevel())
         .arg(m_availableWidth)
         .arg(width())
@@ -1998,13 +2032,13 @@ void ControlBar::paintEvent(QPaintEvent *)
                                          : QColor(255, 255, 255, 26), 1));
         p.drawLine(QPointF(0, 0.5), QPointF(width(), 0.5));
     } else {
-        // 悬浮底栏外壳：14px 圆角长矩形（Fluent 图标统一审图修订 2026-11-18）。
-        // 定稿 596×44：四角 14px 圆角 → 两端各留 44-2*14=16px 直边；
-        // 进度条直接落在外壳上，不再套内嵌底（2026-11-19 定稿）。
+        // 悬浮底栏外壳：Floating 为 14px 圆角长矩形；Capsule 为两端全圆（22px）
+        // 的长胶囊（参考《底栏样式-长滑条参考-20261128.png》）。
+        const qreal radius = (m_style == Style::Capsule) ? kCapsuleRadius : kIslandRadius;
         p.setPen(QPen((UiStyle::isLight() ? QColor(0, 0, 0, 28) : QColor(255, 255, 255, 30)), 1));
         p.setBrush(UiStyle::isLight() ? QColor(250, 250, 251, 242)
                                       : QColor(31, 32, 35, 227));
-        p.drawRoundedRect(capsule, kIslandRadius, kIslandRadius);
+        p.drawRoundedRect(capsule, radius, radius);
     }
 
     const QVector<Item> list = items();
@@ -2023,13 +2057,18 @@ void ControlBar::paintEvent(QPaintEvent *)
                 p.setOpacity(p.opacity() * 0.58);
             }
             const qreal y = r.center().y() + 0.5;
-            const qreal left = r.left() + 7.0;
-            const qreal right = r.right() - 7.0;
+            const bool capsule = (m_style == Style::Capsule);
+            // Capsule：轨道更粗、滑块更大（参考长滑条概念图）；其余样式沿用 3px 轨道、5.5 滑块。
+            const qreal trackW = capsule ? 4.0 : 3.0;
+            const qreal thumbR = capsule ? 7.5 : 5.5;
+            const qreal inset = capsule ? 9.0 : 7.0;
+            const qreal left = r.left() + inset;
+            const qreal right = r.right() - inset;
             QColor idle(QString::fromLatin1(UiStyle::pick("#626365", "#c4c8cc")));
             if (v.press > 0.004) {
                 idle = blendColor(idle, QColor(0x8a, 0x8e, 0x94), 0.55 * v.press);
             }
-            p.setPen(QPen(idle, 3, Qt::SolidLine, Qt::RoundCap));
+            p.setPen(QPen(idle, trackW, Qt::SolidLine, Qt::RoundCap));
             p.drawLine(QPointF(left, y), QPointF(right, y));
             // 只有一张图时滑杆没有可拖动范围：不画蓝色进度、滑块停在左端并灰显，
             // 避免「满格」被误读成已到目录末尾。
@@ -2038,7 +2077,7 @@ void ControlBar::paintEvent(QPaintEvent *)
             if (enabled) {
                 // 概念图 03 的进度填充为亮蓝 #61b1ff，比界面强调色更偏蓝。
                 const QColor fill(QString::fromLatin1(UiStyle::pick("#61b1ff", "#1688f8")));
-                p.setPen(QPen(fill, 3, Qt::SolidLine, Qt::RoundCap));
+                p.setPen(QPen(fill, trackW, Qt::SolidLine, Qt::RoundCap));
                 p.drawLine(QPointF(left, y), QPointF(thumbX, y));
             }
             const qreal grow = 1.0 + qMax(0.12 * v.hover, 0.22 * v.press);
@@ -2050,7 +2089,7 @@ void ControlBar::paintEvent(QPaintEvent *)
             }
             p.setPen(Qt::NoPen);
             p.setBrush(thumb);
-            p.drawEllipse(QPointF(thumbX, y), 5.5 * grow, 5.5 * grow);
+            p.drawEllipse(QPointF(thumbX, y), thumbR * grow, thumbR * grow);
             p.restore();
             continue;
         }
@@ -2377,9 +2416,12 @@ void ControlBar::mouseMoveEvent(QMouseEvent *e)
         m_tip->hideNow();
     } else if (m_hover >= 0) {
         const Item &it = list.at(m_hover);
-        const QPoint anchor = (it.action == Action::Lock || it.action == Action::Rotate)
-                                  ? mapToGlobal(it.rect.center())
-                                  : e->globalPosition().toPoint();
+        // 锁 / 旋转 / 滑条：提示锚定在控件中央，滑条提示落在轨道正上方；
+        // 其余按钮跟随指针。
+        const bool centered = (it.action == Action::Lock || it.action == Action::Rotate
+                               || it.action == Action::PageSlider);
+        const QPoint anchor = centered ? mapToGlobal(it.rect.center())
+                                       : e->globalPosition().toPoint();
         m_tip->hover(tipText(it.action), anchor);
     } else {
         m_tip->hideNow();
